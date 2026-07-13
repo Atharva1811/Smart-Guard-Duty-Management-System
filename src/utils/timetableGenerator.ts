@@ -26,7 +26,7 @@ export const getDayOfWeek = (dateStr: string): number => {
 // Main generator class
 export const timetableGenerator = {
   // Generate roster for a target date
-  generateRoster: (dateStr: string, _user: string = "system"): {
+  generateRoster: (dateStr: string, _user: string = "system", currentRoster?: DayRoster): {
     roster: DayRoster;
     shortages: ShortageRecord[];
     vacantLocations: string[];
@@ -42,6 +42,7 @@ export const timetableGenerator = {
     // 1. Initialize empty roster or load existing to preserve locked cells
     const existingRoster = dbHub.getRosterForDate(dateStr);
     const roster: DayRoster = {};
+    const rosterToUse = currentRoster || (existingRoster ? existingRoster.roster : null);
     
     // Keep track of assigned guards on this day to avoid duplicate assignments
     const assignedGuardIds = new Set<string>();
@@ -55,8 +56,8 @@ export const timetableGenerator = {
         Reserve: { guardId: null, guardName: null, locked: false }
       };
       
-      if (existingRoster && existingRoster.roster[loc.id]) {
-        const ext = existingRoster.roster[loc.id];
+      if (rosterToUse && rosterToUse[loc.id]) {
+        const ext = rosterToUse[loc.id];
         (['Morning', 'Evening', 'Night', 'Reserve'] as const).forEach(shift => {
           if (ext[shift] && ext[shift].locked && ext[shift].guardId) {
             roster[loc.id][shift] = { ...ext[shift] };

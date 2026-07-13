@@ -106,8 +106,8 @@ export const TodayDuty: React.FC = () => {
   const handleAutoGenerate = () => {
     if (isReadOnly) return;
     
-    // Generate schedule
-    const result = timetableGenerator.generateRoster(selectedDate, user?.username || "supervisor");
+    // Generate schedule, passing current roster to preserve UI-locked cells
+    const result = timetableGenerator.generateRoster(selectedDate, user?.username || "supervisor", roster);
     
     // Save to history
     pushToUndoStack(roster);
