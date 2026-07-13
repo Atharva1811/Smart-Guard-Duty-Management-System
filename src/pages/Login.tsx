@@ -23,7 +23,7 @@ export const Login: React.FC = () => {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoverySent, setRecoverySent] = useState(false);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginFormInputs>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>({
     defaultValues: {
       username: "",
       passcode: "",
@@ -46,20 +46,7 @@ export const Login: React.FC = () => {
     }
   };
 
-  // Quick-fill buttons for demonstration purposes
-  const handleQuickFill = (role: 'admin' | 'supervisor' | 'viewer') => {
-    if (role === 'admin') {
-      setValue("username", "admin");
-      setValue("passcode", "admin123");
-    } else if (role === 'supervisor') {
-      setValue("username", "supervisor");
-      setValue("passcode", "supervisor123");
-    } else {
-      setValue("username", "viewer");
-      setValue("passcode", "viewer123");
-    }
-    setError(null);
-  };
+
 
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,33 +190,7 @@ export const Login: React.FC = () => {
                 )}
               </button>
 
-              {/* Demo Assist Panel */}
-              <div className="border-t border-slate-800/80 pt-5 mt-6">
-                <p className="text-xs text-slate-400 text-center mb-3">{t("quickLogin")}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill("admin")}
-                    className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/50 text-[11px] font-medium transition-colors"
-                  >
-                    Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill("supervisor")}
-                    className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/50 text-[11px] font-medium transition-colors"
-                  >
-                    Supervisor
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill("viewer")}
-                    className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/50 text-[11px] font-medium transition-colors"
-                  >
-                    Viewer
-                  </button>
-                </div>
-              </div>
+
             </motion.form>
           ) : (
             <motion.form 
