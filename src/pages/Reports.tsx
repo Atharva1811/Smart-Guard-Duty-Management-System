@@ -245,8 +245,8 @@ export const Reports: React.FC = () => {
       </div>
 
       {/* Report selector */}
-      <div className="grid gap-6 md:grid-cols-4 no-print">
-        <div className="border border-border rounded-xl bg-card p-4 shadow-sm space-y-1">
+      <div className="grid gap-6 md:grid-cols-4 print:block">
+        <div className="border border-border rounded-xl bg-card p-4 shadow-sm space-y-1 no-print">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block mb-2 px-1">Report Parameters</span>
           
           {[
@@ -282,7 +282,7 @@ export const Reports: React.FC = () => {
         </div>
 
         {/* Report Preview Panel */}
-        <div className="md:col-span-3 space-y-6">
+        <div className="md:col-span-3 space-y-6 print:w-full">
           {/* Chart preview */}
           {reportType !== 'daily' && previewData.length > 0 && (
             <div className="border border-border rounded-xl bg-card p-6 shadow-sm">
