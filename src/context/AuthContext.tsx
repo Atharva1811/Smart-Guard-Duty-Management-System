@@ -131,10 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const match = users.find(u => u.username === username.toLowerCase());
 
     if (match) {
-      // Validate simple passcode simulation:
-      // admin -> admin123, supervisor -> supervisor123, viewer -> viewer123
-      const expectedPasscode = username.toLowerCase() === "admin" ? "admin123" : 
-                               username.toLowerCase() === "supervisor" ? "supervisor123" : "viewer123";
+      const expectedPasscode = username.toLowerCase() === "admin" ? "admin123" : "supervisor123";
                                
       if (passcode === expectedPasscode) {
         const mockToken = generateMockToken(match);

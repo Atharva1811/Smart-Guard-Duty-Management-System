@@ -9,7 +9,7 @@ import { Search, Save, CheckSquare, Clock } from "lucide-react";
 export const Availability: React.FC = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
 
   const [guards, setGuards] = useState<Guard[]>([]);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);

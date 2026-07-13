@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 export const Leaves: React.FC = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
 
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [guards, setGuards] = useState<Guard[]>([]);

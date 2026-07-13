@@ -10,7 +10,7 @@ import { Plus, Search, Edit2, Trash2, X, ShieldAlert, Upload, ClipboardList } fr
 export const Guards: React.FC = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
   
   const [guards, setGuards] = useState<Guard[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);

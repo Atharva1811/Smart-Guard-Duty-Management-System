@@ -22,7 +22,7 @@ import confetti from "canvas-confetti";
 export const TodayDuty: React.FC = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
   
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [guards, setGuards] = useState<Guard[]>([]);

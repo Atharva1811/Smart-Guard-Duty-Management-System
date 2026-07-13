@@ -75,7 +75,7 @@ export interface RosterHistory {
 export interface SystemUser {
   username: string;
   name: string;
-  role: 'Admin' | 'Supervisor' | 'Viewer';
+  role: 'Admin' | 'Security Officer';
   email: string;
 }
 
@@ -144,8 +144,7 @@ const INITIAL_LOCATIONS: Location[] = [
 
 const INITIAL_USERS: SystemUser[] = [
   { username: "admin", name: "Chief Security Officer", role: "Admin", email: "chief@smartguard.com" },
-  { username: "supervisor", name: "Shift Supervisor", role: "Supervisor", email: "supervisor@smartguard.com" },
-  { username: "viewer", name: "Roster Inspector", role: "Viewer", email: "viewer@smartguard.com" }
+  { username: "supervisor", name: "Shift Security Officer", role: "Security Officer", email: "officer@smartguard.com" }
 ];
 
 const INITIAL_SETTINGS: SystemSettings = {

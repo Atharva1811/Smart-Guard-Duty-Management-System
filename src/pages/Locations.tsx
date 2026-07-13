@@ -10,7 +10,7 @@ import { Plus, Search, Edit2, Trash2, X, MapPin, ShieldAlert } from "lucide-reac
 export const Locations: React.FC = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
   
   const [locations, setLocations] = useState<Location[]>([]);
   const [search, setSearch] = useState("");

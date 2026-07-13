@@ -20,7 +20,7 @@ import { githubClient } from "../db/githubClient";
 export const Settings: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const isReadOnly = user?.role === "Viewer";
+  const isReadOnly = false;
 
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   

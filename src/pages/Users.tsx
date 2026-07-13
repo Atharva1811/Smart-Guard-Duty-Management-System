@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { SystemUser } from "../db/mockDb";
-import { ShieldCheck, ShieldAlert, Eye, User, Info } from "lucide-react";
+import { ShieldCheck, ShieldAlert, User, Info } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 export const Users: React.FC = () => {
@@ -15,16 +15,14 @@ export const Users: React.FC = () => {
   const getRoleIcon = (role: SystemUser["role"]) => {
     switch (role) {
       case "Admin": return <ShieldAlert className="h-5 w-5 text-rose-500" />;
-      case "Supervisor": return <ShieldCheck className="h-5 w-5 text-amber-500" />;
-      default: return <Eye className="h-5 w-5 text-blue-500" />;
+      default: return <ShieldCheck className="h-5 w-5 text-amber-500" />;
     }
   };
 
   const getRoleDescription = (role: SystemUser["role"]) => {
     switch (role) {
       case "Admin": return "Full access: Manage guards, manage locations, auto-generate rosters, manual schedule overrides, user credentials audit, export reports, edit system configuration.";
-      case "Supervisor": return "Moderate access: Mark daily attendance codes, request guard leave records, run auto-generation roster templates, execute cell swaps/overrides, edit shift timings.";
-      default: return "Read-only access: View schedules, search guard duty allocations, review reports, and check audit trail logs.";
+      default: return "Security Officer access: Mark daily attendance codes, request guard leave records, run auto-generation roster templates, execute cell swaps/overrides, edit shift timings.";
     }
   };
 
@@ -40,7 +38,7 @@ export const Users: React.FC = () => {
       <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 text-xs flex gap-3 text-blue-750 dark:text-blue-300">
         <Info className="h-5 w-5 flex-shrink-0 text-blue-500 mt-0.5" />
         <div className="leading-relaxed">
-          <span className="font-bold">Deployment Architecture Notice:</span> This application runs entirely inside the browser to host 100% free of charge. Role configurations are used to customize access features. To swap roles, click logout and sign in using the quick-select buttons on the login portal.
+          <span className="font-bold">Deployment Architecture Notice:</span> This application runs entirely inside the browser to host 100% free of charge. Role configurations are used to customize access features. To swap roles, click logout and sign in using the login portal.
         </div>
       </div>
 
