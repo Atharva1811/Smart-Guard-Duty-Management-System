@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { translateContent } from "../utils/translator";
 import { useForm } from "react-hook-form";
-import { Plus, Search, Edit2, Trash2, X, MapPin, ShieldAlert } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, X, MapPin, ShieldAlert, Upload, ClipboardList } from "lucide-react";
 
 export const Locations: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +18,8 @@ export const Locations: React.FC = () => {
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkNames, setBulkNames] = useState("");
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<Location>({
@@ -116,7 +118,62 @@ export const Locations: React.FC = () => {
 
     await dbHub.saveLocations(updated);
     reloadLocations();
-    setShowModal(false);
+  };
+
+  const handleBulkImport = async () => {
+    if (isReadOnly) return;
+    if (!bulkNames.trim()) return;
+
+    const names = bulkNames
+      .split("\n")
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+
+    if (names.length === 0) return;
+
+    const updated = [...locations];
+
+    let nextNum = 1;
+    updated.forEach(l => {
+      const match = l.id.match(/^L(\d+)$/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num >= nextNum) {
+          nextNum = num + 1;
+        }
+      }
+    });
+
+    names.forEach(name => {
+      const formattedId = `L${String(nextNum).padStart(3, "0")}`;
+      nextNum++;
+
+      const newLoc: Location = {
+        id: formattedId,
+        name,
+        priority: "Medium",
+        guardsRequired: 1,
+        shiftRequirement: {
+          Morning: true,
+          Evening: true,
+          Night: false
+        },
+        indoorOutdoor: "Indoor",
+        securityLevel: "Standard",
+        specialSkillsRequired: [],
+        availableTime: "24/7",
+        notes: ""
+      };
+      updated.push(newLoc);
+    });
+
+    await dbHub.saveLocations(updated);
+    dbHub.addAuditLog(user?.username || "system", "Locations Bulk Imported", `Imported ${names.length} location profiles with sequential IDs`);
+    
+    reloadLocations();
+    setBulkNames("");
+    setShowBulkModal(false);
+    alert(`Successfully imported ${names.length} locations.`);
   };
 
   const filteredLocations = locations.filter(l => {
@@ -145,13 +202,22 @@ export const Locations: React.FC = () => {
         </div>
 
         {!isReadOnly && (
-          <button
-            onClick={handleAddClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <Plus className="h-4.5 w-4.5" />
-            <span>{t("addLocation")}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-sm shadow-sm transition-all"
+            >
+              <Upload className="h-4.5 w-4.5" />
+              <span>{t("bulkImport")}</span>
+            </button>
+            <button
+              onClick={handleAddClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <Plus className="h-4.5 w-4.5" />
+              <span>{t("addLocation")}</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -439,6 +505,97 @@ export const Locations: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Bulk Upload Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg relative text-foreground">
+            <button 
+              onClick={() => {
+                setShowBulkModal(false);
+                setBulkNames("");
+              }}
+              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-primary/10 text-primary rounded-lg">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Bulk Upload Location Names</h3>
+                <p className="text-xs text-muted-foreground">Import multiple locations at once with sequential IDs.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* File Upload Option */}
+              <div className="border border-dashed border-border rounded-lg p-4 bg-muted/15 flex flex-col items-center justify-center text-center">
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-xs font-semibold">Upload Locations List File</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Drag & drop or select a .txt or .csv list of locations</p>
+                <input 
+                  type="file"
+                  accept=".txt,.csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                      const text = evt.target?.result;
+                      if (typeof text === "string") {
+                        setBulkNames(text);
+                      }
+                    };
+                    reader.readAsText(file);
+                  }}
+                  className="mt-3 text-xs w-full max-w-xs text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                />
+              </div>
+
+              {/* Copy/Paste text area */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+                  Or Paste Location Names (One per line)
+                </label>
+                <textarea
+                  value={bulkNames}
+                  onChange={(e) => setBulkNames(e.target.value)}
+                  placeholder="Main HQ Entrance&#10;North Parking Lobby&#10;Emergency Exit B"
+                  className="w-full h-44 px-3 py-2 rounded-lg border border-border bg-muted/20 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground/50 resize-none font-sans"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Locations will be auto-assigned sequential numerical IDs (e.g. L007, L008...)
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-3 border-t border-border mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBulkModal(false);
+                    setBulkNames("");
+                  }}
+                  className="flex-1 py-2.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkImport}
+                  disabled={!bulkNames.trim()}
+                  className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/95 disabled:bg-primary/50 text-primary-foreground font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="h-4.5 w-4.5" />
+                  Import ({bulkNames.split("\n").filter(n => n.trim().length > 0).length} locations)
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
