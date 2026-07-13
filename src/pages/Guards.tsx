@@ -22,6 +22,14 @@ export const Guards: React.FC = () => {
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
+  const [selectedGuards, setSelectedGuards] = useState<string[]>([]);
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditFields, setBulkEditFields] = useState({
+    department: { enabled: false, value: "Corporate Security" },
+    shiftPreference: { enabled: false, value: "Any" as const },
+    weeklyOff: { enabled: false, value: 0 },
+    status: { enabled: false, value: "Available" as const }
+  });
   const [editingGuard, setEditingGuard] = useState<Guard | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkNames, setBulkNames] = useState("");
@@ -51,6 +59,40 @@ export const Guards: React.FC = () => {
 
   const reloadGuards = () => {
     setGuards(dbHub.getGuards());
+  };
+
+  const handleBulkEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isReadOnly || selectedGuards.length === 0) return;
+    const updated = guards.map(g => {
+      if (selectedGuards.includes(g.id)) {
+        const copy = { ...g };
+        if (bulkEditFields.department.enabled) copy.department = bulkEditFields.department.value;
+        if (bulkEditFields.shiftPreference.enabled) copy.shiftPreference = bulkEditFields.shiftPreference.value;
+        if (bulkEditFields.weeklyOff.enabled) copy.weeklyOff = Number(bulkEditFields.weeklyOff.value);
+        if (bulkEditFields.status.enabled) copy.status = bulkEditFields.status.value;
+        return copy;
+      }
+      return g;
+    });
+    await dbHub.saveGuards(updated);
+    dbHub.addAuditLog(user?.username || "system", "Guards Bulk Edited", `Edited ${selectedGuards.length} guards`);
+    reloadGuards();
+    setSelectedGuards([]);
+    setShowBulkEditModal(false);
+    alert(`Successfully updated ${selectedGuards.length} guards.`);
+  };
+
+  const handleBulkDelete = async () => {
+    if (isReadOnly || selectedGuards.length === 0) return;
+    if (confirm(`Are you sure you want to delete ${selectedGuards.length} selected guards?`)) {
+      const updated = guards.filter(g => !selectedGuards.includes(g.id));
+      await dbHub.saveGuards(updated);
+      dbHub.addAuditLog(user?.username || "system", "Guards Bulk Deleted", `Deleted ${selectedGuards.length} guards`);
+      reloadGuards();
+      setSelectedGuards([]);
+      alert(`Successfully deleted ${selectedGuards.length} guards.`);
+    }
   };
 
   // Open modal for adding
@@ -295,6 +337,52 @@ export const Guards: React.FC = () => {
         </div>
       </div>
 
+      {/* Selection Summary Bar */}
+      {selectedGuards.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border border-primary/20 bg-primary/5 text-xs text-foreground shadow-sm">
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox"
+              checked={selectedGuards.length === filteredGuards.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedGuards(filteredGuards.map(g => g.id));
+                } else {
+                  setSelectedGuards([]);
+                }
+              }}
+              className="h-4 w-4 rounded border-border bg-muted/20 text-primary focus:ring-primary cursor-pointer"
+            />
+            <span className="font-semibold">{selectedGuards.length} guards selected</span>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowBulkEditModal(true)}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-xs transition-colors"
+            >
+              Bulk Edit
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive hover:bg-destructive/95 text-destructive-foreground font-semibold text-xs transition-colors"
+            >
+              Bulk Delete
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedGuards.length === 0 && filteredGuards.length > 0 && (
+        <div className="flex justify-end select-none">
+          <button
+            onClick={() => setSelectedGuards(filteredGuards.map(g => g.id))}
+            className="text-xs font-semibold text-primary hover:underline"
+          >
+            Select All Filtered ({filteredGuards.length})
+          </button>
+        </div>
+      )}
+
       {/* Roster Cards List */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredGuards.length === 0 ? (
@@ -309,6 +397,20 @@ export const Guards: React.FC = () => {
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
+                    {!isReadOnly && (
+                      <input 
+                        type="checkbox"
+                        checked={selectedGuards.includes(guard.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedGuards(prev => [...prev, guard.id]);
+                          } else {
+                            setSelectedGuards(prev => prev.filter(id => id !== guard.id));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-border bg-muted/20 text-primary focus:ring-primary cursor-pointer"
+                      />
+                    )}
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm">
                       {guard.name.split(" ").map(n => n[0]).join("")}
                     </div>
@@ -655,6 +757,151 @@ export const Guards: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Edit Modal */}
+      {showBulkEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg relative text-foreground">
+            <button 
+              onClick={() => setShowBulkEditModal(false)}
+              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-primary/10 text-primary rounded-lg">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Bulk Edit Guards</h3>
+                <p className="text-xs text-muted-foreground">Modify specific fields for {selectedGuards.length} selected profiles.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleBulkEditSubmit} className="space-y-4 text-xs">
+              {/* Department */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.department.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, department: { ...prev.department, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Department</span>
+                </label>
+                {bulkEditFields.department.enabled && (
+                  <input 
+                    type="text"
+                    value={bulkEditFields.department.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, department: { ...prev.department, value: e.target.value } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                    placeholder="Enter department name..."
+                  />
+                )}
+              </div>
+
+              {/* Shift Preference */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.shiftPreference.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, shiftPreference: { ...prev.shiftPreference, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Shift Preference</span>
+                </label>
+                {bulkEditFields.shiftPreference.enabled && (
+                  <select 
+                    value={bulkEditFields.shiftPreference.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, shiftPreference: { ...prev.shiftPreference, value: e.target.value as any } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value="Any">Any Shift</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Weekly Off Day */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.weeklyOff.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, weeklyOff: { ...prev.weeklyOff, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Weekly Off Day</span>
+                </label>
+                {bulkEditFields.weeklyOff.enabled && (
+                  <select 
+                    value={bulkEditFields.weeklyOff.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, weeklyOff: { ...prev.weeklyOff, value: Number(e.target.value) } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value={0}>Sunday</option>
+                    <option value={1}>Monday</option>
+                    <option value={2}>Tuesday</option>
+                    <option value={3}>Wednesday</option>
+                    <option value={4}>Thursday</option>
+                    <option value={5}>Friday</option>
+                    <option value={6}>Saturday</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.status.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, status: { ...prev.status, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Availability Status</span>
+                </label>
+                {bulkEditFields.status.enabled && (
+                  <select 
+                    value={bulkEditFields.status.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, status: { ...prev.status, value: e.target.value as any } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Leave">Leave</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Training">Training</option>
+                    <option value="Medical">Medical</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-3 border-t border-border mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkEditModal(false)}
+                  className="flex-1 py-2 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!Object.values(bulkEditFields).some(f => f.enabled)}
+                  className="flex-1 py-2 rounded-lg bg-primary hover:bg-primary/95 disabled:bg-primary/50 text-primary-foreground font-semibold text-xs transition-colors"
+                >
+                  Apply to {selectedGuards.length} guards
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -20,6 +20,14 @@ export const Locations: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkNames, setBulkNames] = useState("");
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditFields, setBulkEditFields] = useState({
+    priority: { enabled: false, value: "Medium" as const },
+    guardsRequired: { enabled: false, value: 1 },
+    indoorOutdoor: { enabled: false, value: "Indoor" as const },
+    securityLevel: { enabled: false, value: "Standard" as const }
+  });
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<Location>({
@@ -47,6 +55,40 @@ export const Locations: React.FC = () => {
 
   const reloadLocations = () => {
     setLocations(dbHub.getLocations());
+  };
+
+  const handleBulkEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isReadOnly || selectedLocations.length === 0) return;
+    const updated = locations.map(l => {
+      if (selectedLocations.includes(l.id)) {
+        const copy = { ...l };
+        if (bulkEditFields.priority.enabled) copy.priority = bulkEditFields.priority.value;
+        if (bulkEditFields.guardsRequired.enabled) copy.guardsRequired = Number(bulkEditFields.guardsRequired.value);
+        if (bulkEditFields.indoorOutdoor.enabled) copy.indoorOutdoor = bulkEditFields.indoorOutdoor.value;
+        if (bulkEditFields.securityLevel.enabled) copy.securityLevel = bulkEditFields.securityLevel.value;
+        return copy;
+      }
+      return l;
+    });
+    await dbHub.saveLocations(updated);
+    dbHub.addAuditLog(user?.username || "system", "Locations Bulk Edited", `Edited ${selectedLocations.length} locations`);
+    reloadLocations();
+    setSelectedLocations([]);
+    setShowBulkEditModal(false);
+    alert(`Successfully updated ${selectedLocations.length} locations.`);
+  };
+
+  const handleBulkDelete = async () => {
+    if (isReadOnly || selectedLocations.length === 0) return;
+    if (confirm(`Are you sure you want to delete ${selectedLocations.length} selected locations?`)) {
+      const updated = locations.filter(l => !selectedLocations.includes(l.id));
+      await dbHub.saveLocations(updated);
+      dbHub.addAuditLog(user?.username || "system", "Locations Bulk Deleted", `Deleted ${selectedLocations.length} locations`);
+      reloadLocations();
+      setSelectedLocations([]);
+      alert(`Successfully deleted ${selectedLocations.length} locations.`);
+    }
   };
 
   const handleAddClick = () => {
@@ -248,6 +290,52 @@ export const Locations: React.FC = () => {
         </div>
       </div>
 
+      {/* Selection Summary Bar */}
+      {selectedLocations.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border border-primary/20 bg-primary/5 text-xs text-foreground shadow-sm">
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox"
+              checked={selectedLocations.length === filteredLocations.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedLocations(filteredLocations.map(l => l.id));
+                } else {
+                  setSelectedLocations([]);
+                }
+              }}
+              className="h-4 w-4 rounded border-border bg-muted/20 text-primary focus:ring-primary cursor-pointer"
+            />
+            <span className="font-semibold">{selectedLocations.length} locations selected</span>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowBulkEditModal(true)}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-xs transition-colors"
+            >
+              Bulk Edit
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive hover:bg-destructive/95 text-destructive-foreground font-semibold text-xs transition-colors"
+            >
+              Bulk Delete
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedLocations.length === 0 && filteredLocations.length > 0 && (
+        <div className="flex justify-end select-none">
+          <button
+            onClick={() => setSelectedLocations(filteredLocations.map(l => l.id))}
+            className="text-xs font-semibold text-primary hover:underline"
+          >
+            Select All Filtered ({filteredLocations.length})
+          </button>
+        </div>
+      )}
+
       {/* Grid of locations */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredLocations.length === 0 ? (
@@ -260,6 +348,20 @@ export const Locations: React.FC = () => {
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
+                    {!isReadOnly && (
+                      <input 
+                        type="checkbox"
+                        checked={selectedLocations.includes(loc.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLocations(prev => [...prev, loc.id]);
+                          } else {
+                            setSelectedLocations(prev => prev.filter(id => id !== loc.id));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-border bg-muted/20 text-primary focus:ring-primary cursor-pointer"
+                      />
+                    )}
                     <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                       <MapPin className="h-5 w-5" />
                     </div>
@@ -596,6 +698,143 @@ export const Locations: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Edit Modal */}
+      {showBulkEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg relative text-foreground">
+            <button 
+              onClick={() => setShowBulkEditModal(false)}
+              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-primary/10 text-primary rounded-lg">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Bulk Edit Locations</h3>
+                <p className="text-xs text-muted-foreground">Modify specific fields for {selectedLocations.length} selected locations.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleBulkEditSubmit} className="space-y-4 text-xs">
+              {/* Priority */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.priority.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, priority: { ...prev.priority, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Priority</span>
+                </label>
+                {bulkEditFields.priority.enabled && (
+                  <select 
+                    value={bulkEditFields.priority.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, priority: { ...prev.priority, value: e.target.value as any } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value="Low">Low Priority</option>
+                    <option value="Medium">Medium Priority</option>
+                    <option value="High">High Priority</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Guards Required */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.guardsRequired.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, guardsRequired: { ...prev.guardsRequired, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Guards Required</span>
+                </label>
+                {bulkEditFields.guardsRequired.enabled && (
+                  <input 
+                    type="number"
+                    min={1}
+                    value={bulkEditFields.guardsRequired.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, guardsRequired: { ...prev.guardsRequired, value: Number(e.target.value) } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  />
+                )}
+              </div>
+
+              {/* Indoor/Outdoor */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.indoorOutdoor.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, indoorOutdoor: { ...prev.indoorOutdoor, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Location Setup (Indoor/Outdoor)</span>
+                </label>
+                {bulkEditFields.indoorOutdoor.enabled && (
+                  <select 
+                    value={bulkEditFields.indoorOutdoor.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, indoorOutdoor: { ...prev.indoorOutdoor, value: e.target.value as any } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value="Indoor">Indoor</option>
+                    <option value="Outdoor">Outdoor</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Security Level */}
+              <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/10">
+                <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={bulkEditFields.securityLevel.enabled}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, securityLevel: { ...prev.securityLevel, enabled: e.target.checked } }))}
+                    className="h-4.5 w-4.5 rounded border-border text-primary"
+                  />
+                  <span>Change Security Level</span>
+                </label>
+                {bulkEditFields.securityLevel.enabled && (
+                  <select 
+                    value={bulkEditFields.securityLevel.value}
+                    onChange={(e) => setBulkEditFields(prev => ({ ...prev, securityLevel: { ...prev.securityLevel, value: e.target.value as any } }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-3 border-t border-border mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkEditModal(false)}
+                  className="flex-1 py-2 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!Object.values(bulkEditFields).some(f => f.enabled)}
+                  className="flex-1 py-2 rounded-lg bg-primary hover:bg-primary/95 disabled:bg-primary/50 text-primary-foreground font-semibold text-xs transition-colors"
+                >
+                  Apply to {selectedLocations.length} locations
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
