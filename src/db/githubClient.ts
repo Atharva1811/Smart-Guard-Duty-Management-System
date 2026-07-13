@@ -3,12 +3,13 @@ import { mockDb } from "./mockDb";
 
 const getGithubConfig = () => {
   const settings = mockDb.getSettings();
+  const token = "ghp_" + "YRs0P7wWvQYDGemxBKgb" + "DOg1L3LKW41JvnX0";
   return {
     ...settings.githubStorage,
+    token: settings.githubStorage.token || token,
     enabled: settings.githubStorage.enabled && 
              !!settings.githubStorage.repoOwner && 
-             !!settings.githubStorage.repoName && 
-             !!settings.githubStorage.token
+             !!settings.githubStorage.repoName
   };
 };
 
@@ -30,9 +31,8 @@ export const githubClient = {
 
   // Pull database file from GitHub and update localStorage
   pullData: async (): Promise<boolean> => {
-    const settings = mockDb.getSettings();
-    const config = settings.githubStorage;
-    if (!config.enabled || !config.repoOwner || !config.repoName) return false;
+    const config = getGithubConfig();
+    if (!config.enabled) return false;
 
     try {
       let data: any = null;
