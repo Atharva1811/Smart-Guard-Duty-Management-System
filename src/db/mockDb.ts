@@ -170,11 +170,11 @@ const INITIAL_SETTINGS: SystemSettings = {
     enabled: false
   },
   githubStorage: {
-    repoOwner: "",
-    repoName: "",
+    repoOwner: "Atharva1811",
+    repoName: "Smart-Guard-Duty-Management-System",
     token: "",
-    filePath: "guard_duty_db.json",
-    enabled: false
+    filePath: "db.json",
+    enabled: true
   }
 };
 

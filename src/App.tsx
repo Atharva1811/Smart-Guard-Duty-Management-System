@@ -14,6 +14,7 @@ import { Leaves } from "./pages/Leaves";
 import { Reports } from "./pages/Reports";
 import { Users } from "./pages/Users";
 import { Settings } from "./pages/Settings";
+import { dbHub } from "./db/dbHub";
 
 // Protect route checking for active session
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
@@ -55,6 +56,17 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 export const App: React.FC = () => {
+  React.useEffect(() => {
+    const initPull = async () => {
+      try {
+        await dbHub.pullCloudData();
+      } catch {
+        // Silent catch
+      }
+    };
+    initPull();
+  }, []);
+
   return (
     <LanguageProvider>
       <Router basename="/Smart-Guard-Duty-Management-System">

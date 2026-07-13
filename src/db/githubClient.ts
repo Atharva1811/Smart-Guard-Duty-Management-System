@@ -30,26 +30,40 @@ export const githubClient = {
 
   // Pull database file from GitHub and update localStorage
   pullData: async (): Promise<boolean> => {
-    const config = getGithubConfig();
-    if (!config.enabled) return false;
+    const settings = mockDb.getSettings();
+    const config = settings.githubStorage;
+    if (!config.enabled || !config.repoOwner || !config.repoName) return false;
 
     try {
-      const url = `https://api.github.com/repos/${config.repoOwner}/${config.repoName}/contents/${config.filePath}`;
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `token ${config.token}`,
-          Accept: "application/vnd.github.v3+json"
+      let data: any = null;
+      let sha: string = "";
+
+      if (config.token) {
+        // If token is configured, use the GitHub API (which supports private repos and returns SHA)
+        const url = `https://api.github.com/repos/${config.repoOwner}/${config.repoName}/contents/${config.filePath}`;
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `token ${config.token}`,
+            Accept: "application/vnd.github.v3+json"
+          }
+        });
+
+        if (response.status === 200 && response.data.content) {
+          const jsonStr = atob(response.data.content.replace(/\s/g, ""));
+          data = JSON.parse(jsonStr);
+          sha = response.data.sha;
+          localStorage.setItem("github_sha", sha);
         }
-      });
+      } else {
+        // If no token is configured, try to pull from the public raw URL
+        const url = `https://raw.githubusercontent.com/${config.repoOwner}/${config.repoName}/main/${config.filePath}`;
+        const response = await axios.get(url);
+        if (response.status === 200) {
+          data = response.data;
+        }
+      }
 
-      if (response.status === 200 && response.data.content) {
-        // Decode base64 content
-        const jsonStr = atob(response.data.content.replace(/\s/g, ""));
-        const data = JSON.parse(jsonStr);
-
-        // Store SHA for later updates
-        localStorage.setItem("github_sha", response.data.sha);
-
+      if (data) {
         if (data.guards) mockDb.saveGuards(data.guards);
         if (data.locations) mockDb.saveLocations(data.locations);
         if (data.leaves) mockDb.saveLeaves(data.leaves);
