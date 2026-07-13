@@ -12,7 +12,8 @@ import {
   Clock, 
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload
 } from "lucide-react";
 import { googleSheetsClient } from "../db/googleSheetsClient";
 import { githubClient } from "../db/githubClient";
@@ -327,10 +328,27 @@ export const Settings: React.FC = () => {
 
         {/* Form actions */}
         {!isReadOnly && (
-          <div className="flex justify-end pt-4 border-t border-border">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border">
+            <button
+              type="button"
+              onClick={async () => {
+                if (confirm("WARNING: This will overwrite whatever database file is currently on GitHub with this computer's local database. Are you sure you want to upload this PC's data?")) {
+                  const ok = await dbHub.pushCloudData();
+                  if (ok) {
+                    alert("Successfully backed up/uploaded local PC data to GitHub!");
+                  } else {
+                    alert("Failed to push data to GitHub. Check connection settings.");
+                  }
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-primary text-primary hover:bg-primary/5 font-semibold text-xs transition-all w-full sm:w-auto justify-center"
+            >
+              <Upload className="h-4.5 w-4.5" />
+              <span>Upload PC Data to GitHub</span>
+            </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all w-full sm:w-auto justify-center"
             >
               <Save className="h-4.5 w-4.5" />
               <span>{t("applyChanges")}</span>
