@@ -3,12 +3,13 @@ import { dbHub } from "../db/dbHub";
 import type { Guard, Location } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 import { useForm } from "react-hook-form";
 import { Plus, Search, Edit2, Trash2, X, ShieldAlert, Upload, ClipboardList } from "lucide-react";
 
 export const Guards: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
   
   const [guards, setGuards] = useState<Guard[]>([]);
@@ -312,27 +313,27 @@ export const Guards: React.FC = () => {
                       {guard.name.split(" ").map(n => n[0]).join("")}
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-foreground">{guard.name}</h3>
+                      <h3 className="font-bold text-sm text-foreground">{translateContent(guard.name, language)}</h3>
                       <span className="text-[10px] text-muted-foreground font-semibold uppercase">{guard.id}</span>
                     </div>
                   </div>
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(guard.status)}`}>
-                    {guard.status}
+                    {translateContent(guard.status, language)}
                   </span>
                 </div>
 
                 <div className="space-y-2.5 text-xs text-muted-foreground border-t border-border pt-4">
                   <div className="flex justify-between">
                     <span>Department:</span>
-                    <span className="font-medium text-foreground">{guard.department}</span>
+                    <span className="font-medium text-foreground">{translateContent(guard.department, language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shift Preference:</span>
-                    <span className="font-medium text-foreground">{guard.shiftPreference}</span>
+                    <span className="font-medium text-foreground">{translateContent(guard.shiftPreference, language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Weekly Off:</span>
-                    <span className="font-medium text-foreground">{getDayName(guard.weeklyOff)}</span>
+                    <span className="font-medium text-foreground">{translateContent(getDayName(guard.weeklyOff), language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Experience:</span>

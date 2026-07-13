@@ -14,6 +14,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -22,7 +23,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const translationKeys: Record<string, string> = {
     "Dashboard": "dashboard",
@@ -87,9 +88,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             {user?.name.charAt(0)}
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-semibold truncate text-foreground">{user?.name}</p>
+            <p className="text-sm font-semibold truncate text-foreground">{translateContent(user?.name, language)}</p>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary uppercase">
-              {user?.role}
+              {translateContent(user?.role, language)}
             </span>
           </div>
         </div>

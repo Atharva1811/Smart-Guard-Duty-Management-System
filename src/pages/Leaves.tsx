@@ -3,12 +3,13 @@ import { dbHub } from "../db/dbHub";
 import type { LeaveRequest, Guard } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 import { Plus, Check, X, FileText, Calendar } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 export const Leaves: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
 
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
@@ -136,7 +137,7 @@ export const Leaves: React.FC = () => {
                   <tr key={req.id} className="border-b border-border/70 hover:bg-muted/10 transition-colors h-14">
                     {/* Guard Name */}
                     <td className="px-6 text-left border-r border-border/50">
-                      <div className="font-bold text-foreground">{req.guardName}</div>
+                      <div className="font-bold text-foreground">{translateContent(req.guardName, language)}</div>
                       <span className="text-[10px] text-muted-foreground">{req.guardId}</span>
                     </td>
 
@@ -152,13 +153,13 @@ export const Leaves: React.FC = () => {
 
                     {/* Reason */}
                     <td className="px-4 text-left text-muted-foreground border-r border-border/50">
-                      <p className="line-clamp-2 max-w-[300px]" title={req.reason}>{req.reason}</p>
+                      <p className="line-clamp-2 max-w-[300px]" title={req.reason}>{translateContent(req.reason, language)}</p>
                     </td>
 
                     {/* Status badge */}
                     <td className="px-4 text-center border-r border-border/50">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusBadgeClass(req.status)}`}>
-                        {req.status}
+                        {translateContent(req.status, language)}
                       </span>
                     </td>
 

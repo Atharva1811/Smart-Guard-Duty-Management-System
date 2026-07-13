@@ -5,6 +5,7 @@ import { timetableGenerator } from "../utils/timetableGenerator";
 import type { ConflictRecord, ShortageRecord } from "../utils/timetableGenerator";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 import { 
   Lock, 
   RotateCcw, 
@@ -20,7 +21,7 @@ import confetti from "canvas-confetti";
 
 export const TodayDuty: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
   
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -374,12 +375,12 @@ export const TodayDuty: React.FC = () => {
                     {/* Location Cell */}
                     <td className="text-left font-semibold text-foreground bg-muted/5 pr-4 border-r border-border">
                       <div className="flex flex-col">
-                        <span>{loc.name}</span>
+                        <span>{translateContent(loc.name, language)}</span>
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${loc.priority === 'High' ? 'bg-rose-500/10 text-rose-500' : loc.priority === 'Medium' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500'}`}>
-                            {loc.priority}
+                            {translateContent(loc.priority, language)}
                           </span>
-                          <span className="text-[10px] text-muted-foreground">{loc.indoorOutdoor}</span>
+                          <span className="text-[10px] text-muted-foreground">{translateContent(loc.indoorOutdoor, language)}</span>
                         </div>
                       </div>
                     </td>
@@ -397,10 +398,10 @@ export const TodayDuty: React.FC = () => {
                           onDragStart={(e) => handleDragStart(e, loc.id, "Morning", roster[loc.id].Morning.guardId!)}
                           className="flex items-center justify-center gap-1 cursor-grab"
                         >
-                          <span className="truncate">{roster[loc.id].Morning.guardName}</span>
+                          <span className="truncate">{translateContent(roster[loc.id].Morning.guardName, language)}</span>
                         </div>
                       ) : (
-                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Morning ? "Vacant Spot" : "Off Duty"}</span>
+                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Morning ? t("vacantSpots") : "Off Duty"}</span>
                       )}
                     </td>
 
@@ -417,10 +418,10 @@ export const TodayDuty: React.FC = () => {
                           onDragStart={(e) => handleDragStart(e, loc.id, "Evening", roster[loc.id].Evening.guardId!)}
                           className="flex items-center justify-center gap-1 cursor-grab"
                         >
-                          <span className="truncate">{roster[loc.id].Evening.guardName}</span>
+                          <span className="truncate">{translateContent(roster[loc.id].Evening.guardName, language)}</span>
                         </div>
                       ) : (
-                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Evening ? "Vacant Spot" : "Off Duty"}</span>
+                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Evening ? t("vacantSpots") : "Off Duty"}</span>
                       )}
                     </td>
 
@@ -437,10 +438,10 @@ export const TodayDuty: React.FC = () => {
                           onDragStart={(e) => handleDragStart(e, loc.id, "Night", roster[loc.id].Night.guardId!)}
                           className="flex items-center justify-center gap-1 cursor-grab"
                         >
-                          <span className="truncate">{roster[loc.id].Night.guardName}</span>
+                          <span className="truncate">{translateContent(roster[loc.id].Night.guardName, language)}</span>
                         </div>
                       ) : (
-                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Night ? "Vacant Spot" : "Off Duty"}</span>
+                        <span className="text-[11px] opacity-70">{loc.shiftRequirement.Night ? t("vacantSpots") : "Off Duty"}</span>
                       )}
                     </td>
 
@@ -457,7 +458,7 @@ export const TodayDuty: React.FC = () => {
                           onDragStart={(e) => handleDragStart(e, loc.id, "Reserve", roster[loc.id].Reserve.guardId!)}
                           className="flex items-center justify-center gap-1 cursor-grab text-slate-600 dark:text-slate-300"
                         >
-                          <span className="truncate">{roster[loc.id].Reserve.guardName}</span>
+                          <span className="truncate">{translateContent(roster[loc.id].Reserve.guardName, language)}</span>
                         </div>
                       ) : (
                         <span className="text-[11px] opacity-40">None</span>

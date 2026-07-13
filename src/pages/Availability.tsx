@@ -3,11 +3,12 @@ import { dbHub } from "../db/dbHub";
 import type { Guard, AttendanceRecord } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 import { Search, Save, CheckSquare, Clock } from "lucide-react";
 
 export const Availability: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
 
   const [guards, setGuards] = useState<Guard[]>([]);
@@ -167,13 +168,13 @@ export const Availability: React.FC = () => {
                   <tr key={guard.id} className="border-b border-border/70 hover:bg-muted/10 transition-colors h-14">
                     {/* Guard info */}
                     <td className="px-6 text-left border-r border-border/50">
-                      <div className="font-bold text-foreground">{guard.name}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{guard.id} | Pref: {guard.shiftPreference}</div>
+                      <div className="font-bold text-foreground">{translateContent(guard.name, language)}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{guard.id} | Pref: {translateContent(guard.shiftPreference, language)}</div>
                     </td>
 
                     {/* Department */}
                     <td className="text-left text-muted-foreground border-r border-border/50">
-                      {guard.department}
+                      {translateContent(guard.department, language)}
                     </td>
 
                     {/* Status grid buttons */}

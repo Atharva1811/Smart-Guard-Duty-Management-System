@@ -3,12 +3,13 @@ import { dbHub } from "../db/dbHub";
 import type { Location } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { translateContent } from "../utils/translator";
 import { useForm } from "react-hook-form";
 import { Plus, Search, Edit2, Trash2, X, MapPin, ShieldAlert } from "lucide-react";
 
 export const Locations: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
   
   const [locations, setLocations] = useState<Location[]>([]);
@@ -197,12 +198,12 @@ export const Locations: React.FC = () => {
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-foreground">{loc.name}</h3>
+                      <h3 className="font-bold text-sm text-foreground">{translateContent(loc.name, language)}</h3>
                       <span className="text-[10px] text-muted-foreground font-semibold uppercase">{loc.id}</span>
                     </div>
                   </div>
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${getPriorityColor(loc.priority)}`}>
-                    {loc.priority} Priority
+                    {translateContent(loc.priority, language)} Priority
                   </span>
                 </div>
 
@@ -210,7 +211,7 @@ export const Locations: React.FC = () => {
                   <div className="flex justify-between">
                     <span>Security Level:</span>
                     <span className={`font-semibold ${loc.securityLevel === 'Critical' ? 'text-rose-500' : 'text-foreground'}`}>
-                      {loc.securityLevel}
+                      {translateContent(loc.securityLevel, language)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -219,7 +220,7 @@ export const Locations: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Indoor/Outdoor:</span>
-                    <span className="font-medium text-foreground">{loc.indoorOutdoor}</span>
+                    <span className="font-medium text-foreground">{translateContent(loc.indoorOutdoor, language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Operational Shifts:</span>
@@ -228,7 +229,7 @@ export const Locations: React.FC = () => {
                         loc.shiftRequirement.Morning ? "Morning" : null,
                         loc.shiftRequirement.Evening ? "Evening" : null,
                         loc.shiftRequirement.Night ? "Night" : null
-                      ].filter(Boolean).join(", ") || "None"}
+                      ].filter(Boolean).map(s => translateContent(s || "", language)).join(", ") || "None"}
                     </span>
                   </div>
                   <div className="flex justify-between">
