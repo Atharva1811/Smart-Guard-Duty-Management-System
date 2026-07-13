@@ -146,10 +146,15 @@ input[type=number] {
 
 /* Print utility styles */
 @media print {
-  html, body, #root, .h-screen, .w-screen, .flex-col, .flex-1, main {
+  /* Reset full-screen layout wrappers to standard block display for natural pagination */
+  html, body, #root, 
+  div[class*="h-screen"], 
+  div[class*="overflow-hidden"],
+  main[class*="overflow-y-auto"] {
     height: auto !important;
     min-height: auto !important;
     overflow: visible !important;
+    display: block !important;
     position: relative !important;
   }
   body {
