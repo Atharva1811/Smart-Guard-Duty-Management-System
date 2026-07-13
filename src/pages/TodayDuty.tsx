@@ -493,6 +493,14 @@ export const TodayDuty: React.FC = () => {
                           >
                             <Lock className="h-3.5 w-3.5" />
                           </button>
+                          <button
+                            onClick={() => toggleCellLock(loc.id, "Reserve")}
+                            disabled={!roster[loc.id]?.Reserve?.guardId}
+                            className={`p-1 rounded hover:bg-muted ${roster[loc.id]?.Reserve?.locked ? "text-indigo-500" : "text-muted-foreground opacity-30"}`}
+                            title="Toggle Reserve Lock"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </td>
                     )}
