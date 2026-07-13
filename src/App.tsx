@@ -57,7 +57,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 export const App: React.FC = () => {
   return (
     <LanguageProvider>
-      <Router>
+      <Router basename="/Smart-Guard-Duty-Management-System">
         <ThemeProvider>
           <AuthProvider>
           <Routes>
