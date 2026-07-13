@@ -146,6 +146,12 @@ input[type=number] {
 
 /* Print utility styles */
 @media print {
+  html, body, #root, .h-screen, .w-screen, .flex-col, .flex-1, main {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
   body {
     background: white !important;
     color: black !important;

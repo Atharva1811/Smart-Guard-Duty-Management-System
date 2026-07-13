@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   ];
 
   return (
-    <div className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-card text-card-foreground border-r border-border transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <div className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-card text-card-foreground border-r border-border transition-transform duration-300 md:relative md:translate-x-0 no-print ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="flex h-16 items-center justify-between px-6 border-b border-border">
         <Link to="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
           <UserCheck className="h-6 w-6 text-primary" />

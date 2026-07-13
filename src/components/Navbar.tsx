@@ -132,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-border bg-card/85 backdrop-blur-md px-6 text-card-foreground">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-border bg-card/85 backdrop-blur-md px-6 text-card-foreground no-print">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
