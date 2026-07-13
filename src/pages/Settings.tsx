@@ -41,6 +41,26 @@ export const Settings: React.FC = () => {
 
   useEffect(() => {
     const s = dbHub.getSettings();
+    let updated = false;
+    if (!s.githubStorage.repoOwner || s.githubStorage.repoOwner === "") {
+      s.githubStorage.repoOwner = "Atharva1811";
+      updated = true;
+    }
+    if (!s.githubStorage.repoName || s.githubStorage.repoName === "") {
+      s.githubStorage.repoName = "Smart-Guard-Duty-Management-System";
+      updated = true;
+    }
+    if (s.githubStorage.filePath === "guard_duty_db.json" || !s.githubStorage.filePath) {
+      s.githubStorage.filePath = "db.json";
+      updated = true;
+    }
+    if (!s.githubStorage.enabled) {
+      s.githubStorage.enabled = true;
+      updated = true;
+    }
+    if (updated) {
+      dbHub.saveSettings(s);
+    }
     setSettings(s);
     reset(s);
   }, []);
