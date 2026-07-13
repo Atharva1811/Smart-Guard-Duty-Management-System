@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { LeaveRequest, Guard } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { Plus, Check, X, FileText, Calendar } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 export const Leaves: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
 
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
@@ -96,8 +98,8 @@ export const Leaves: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Leave Roll Calls</h1>
-          <p className="text-sm text-muted-foreground mt-1">Review leave applications and approve schedule exclusions.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("leavesTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("leavesSub")}</p>
         </div>
 
         {!isReadOnly && (
@@ -106,7 +108,7 @@ export const Leaves: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm shadow-md hover:scale-[1.02] transition-all"
           >
             <Plus className="h-4.5 w-4.5" />
-            <span>Apply For Leave</span>
+            <span>{t("applyLeave")}</span>
           </button>
         )}
       </div>
@@ -117,11 +119,11 @@ export const Leaves: React.FC = () => {
           <table className="w-full min-w-[700px] border-collapse text-xs">
             <thead>
               <tr className="bg-muted/40 text-muted-foreground border-b border-border font-semibold h-11 text-center">
-                <th className="text-left px-6">Guard Details</th>
-                <th>Leave Duration</th>
-                <th className="w-80">Reason / Notes</th>
-                <th>Status</th>
-                {!isReadOnly && <th className="w-36">Actions</th>}
+                <th className="text-left px-6">{t("guardNameCol")}</th>
+                <th>{t("leavesTitle")}</th>
+                <th className="w-80">{t("leaveReason")}</th>
+                <th>{t("status")}</th>
+                {!isReadOnly && <th className="w-36">{t("actions")}</th>}
               </tr>
             </thead>
             <tbody>

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { Location } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useForm } from "react-hook-form";
 import { Plus, Search, Edit2, Trash2, X, MapPin, ShieldAlert } from "lucide-react";
 
 export const Locations: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
   
   const [locations, setLocations] = useState<Location[]>([]);
@@ -137,8 +139,8 @@ export const Locations: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Duty Locations Config</h1>
-          <p className="text-sm text-muted-foreground mt-1">Configure duty posts, shift requirements, and security levels.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("locationsTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("locationsSub")}</p>
         </div>
 
         {!isReadOnly && (
@@ -147,7 +149,7 @@ export const Locations: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <Plus className="h-4.5 w-4.5" />
-            <span>Add Location</span>
+            <span>{t("addLocation")}</span>
           </button>
         )}
       </div>
@@ -158,7 +160,7 @@ export const Locations: React.FC = () => {
           <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by ID or Location Name..."
+            placeholder={t("searchLocations")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"

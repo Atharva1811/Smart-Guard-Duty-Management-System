@@ -9,6 +9,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { useLanguage } from "../context/LanguageContext";
 
 type ReportType = 
   | 'daily' 
@@ -20,6 +21,7 @@ type ReportType =
   | 'night_shift';
 
 export const Reports: React.FC = () => {
+  const { t } = useLanguage();
   const [reportType, setReportType] = useState<ReportType>("daily");
   const [targetDate, setTargetDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [guards, setGuards] = useState<Guard[]>([]);
@@ -218,8 +220,8 @@ export const Reports: React.FC = () => {
       {/* Upper header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Operational Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate audits, export data sheets, or print schedules.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("reportsTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("reportsSub")}</p>
         </div>
 
         <div className="flex gap-2">
@@ -229,7 +231,7 @@ export const Reports: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
             <Download className="h-4 w-4 text-muted-foreground" />
-            <span>Export CSV</span>
+            <span>{t("exportCsv")}</span>
           </button>
           <button
             onClick={handlePrint}
@@ -237,7 +239,7 @@ export const Reports: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
             <Printer className="h-4 w-4" />
-            <span>Print Report</span>
+            <span>{t("printReport")}</span>
           </button>
         </div>
       </div>

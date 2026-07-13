@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { Guard, AttendanceRecord } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { Search, Save, CheckSquare, Clock } from "lucide-react";
 
 export const Availability: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
 
   const [guards, setGuards] = useState<Guard[]>([]);
@@ -97,8 +99,8 @@ export const Availability: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Daily Attendance</h1>
-          <p className="text-sm text-muted-foreground mt-1">Mark and record guards availability, leaves, or training roll calls.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("availabilityTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("availabilitySub")}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -115,7 +117,7 @@ export const Availability: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-md hover:scale-[1.02] transition-all"
             >
               <Save className="h-4.5 w-4.5" />
-              <span>Save Changes</span>
+              <span>{t("saveChanges")}</span>
             </button>
           )}
         </div>
@@ -150,10 +152,10 @@ export const Availability: React.FC = () => {
           <table className="w-full min-w-[800px] border-collapse text-xs">
             <thead>
               <tr className="bg-muted/40 text-muted-foreground border-b border-border font-semibold h-11 text-center">
-                <th className="text-left w-52 px-6">Guard Name</th>
-                <th className="text-left w-36">Department</th>
-                <th>Status Code Call</th>
-                <th className="w-64 px-6">Notes / Remarks</th>
+                <th className="text-left w-52 px-6">{t("guardNameCol")}</th>
+                <th className="text-left w-36">{t("department")}</th>
+                <th>{t("statusCol")}</th>
+                <th className="w-64 px-6">{t("notesCol")}</th>
               </tr>
             </thead>
             <tbody>

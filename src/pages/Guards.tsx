@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { Guard, Location } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useForm } from "react-hook-form";
 import { Plus, Search, Edit2, Trash2, X, ShieldAlert, Upload, ClipboardList } from "lucide-react";
 
 export const Guards: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
   
   const [guards, setGuards] = useState<Guard[]>([]);
@@ -222,8 +224,8 @@ export const Guards: React.FC = () => {
       {/* Header and Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Guards Roster Database</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage personnel records, shift schedules, and assignments preferences.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("guardsTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("guardsSub")}</p>
         </div>
 
         {!isReadOnly && (
@@ -233,14 +235,14 @@ export const Guards: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-sm shadow-sm transition-all"
             >
               <Upload className="h-4.5 w-4.5" />
-              <span>Bulk Import Names</span>
+              <span>{t("bulkImport")}</span>
             </button>
             <button
               onClick={handleAddClick}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Plus className="h-4.5 w-4.5" />
-              <span>Add Guard Profile</span>
+              <span>{t("addGuard")}</span>
             </button>
           </div>
         )}
@@ -253,7 +255,7 @@ export const Guards: React.FC = () => {
           <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by ID, Name or Department..."
+            placeholder={t("searchGuards")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { SystemSettings } from "../db/mockDb";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useForm } from "react-hook-form";
 import { 
   Settings as SettingsIcon, 
@@ -18,6 +19,7 @@ import { githubClient } from "../db/githubClient";
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isReadOnly = user?.role === "Viewer";
 
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -103,8 +105,8 @@ export const Settings: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Terminal Settings</h1>
-          <p className="text-sm text-muted-foreground mt-1">Configure duty timing slots, auto-generation parameters, and cloud integrations.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("settingsTitle")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("settingsSub")}</p>
         </div>
       </div>
 
@@ -115,7 +117,7 @@ export const Settings: React.FC = () => {
           <div className="border border-border rounded-xl bg-card p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
               <Clock className="h-4.5 w-4.5 text-primary" />
-              <span>Shift Timing Slots</span>
+              <span>{t("shiftTimingSlots")}</span>
             </h3>
 
             <div className="grid gap-3">
@@ -150,7 +152,7 @@ export const Settings: React.FC = () => {
           <div className="border border-border rounded-xl bg-card p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
               <SettingsIcon className="h-4.5 w-4.5 text-primary" />
-              <span>Timetable Constraints</span>
+              <span>{t("rotationRules")}</span>
             </h3>
 
             <div className="grid gap-4">
@@ -189,7 +191,7 @@ export const Settings: React.FC = () => {
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                 <Database className="h-4.5 w-4.5 text-emerald-500" />
-                <span>Google Sheets Connection</span>
+                <span>{t("sheetsSync")}</span>
               </h3>
               <input
                 type="checkbox"
@@ -229,7 +231,7 @@ export const Settings: React.FC = () => {
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${testingSheets ? "animate-spin" : ""}`} />
                   <span>
-                    {testingSheets ? "Testing Connection..." : sheetsResult === "success" ? "Connection Successful!" : sheetsResult === "error" ? "Connection Failed!" : "Test API Endpoint"}
+                    {testingSheets ? "Pinging Apps Script..." : sheetsResult === "success" ? "Connection Successful!" : sheetsResult === "error" ? "Ping Failed!" : t("pingEndpoint")}
                   </span>
                 </button>
               )}
@@ -315,7 +317,7 @@ export const Settings: React.FC = () => {
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${testingGithub ? "animate-spin" : ""}`} />
                   <span>
-                    {testingGithub ? "Testing Connection..." : githubResult === "success" ? "Connection Successful!" : githubResult === "error" ? "Connection Failed!" : "Verify Repository Credentials"}
+                    {testingGithub ? "Testing Connection..." : githubResult === "success" ? "Connection Successful!" : githubResult === "error" ? "Connection Failed!" : t("testConnection")}
                   </span>
                 </button>
               )}
@@ -331,7 +333,7 @@ export const Settings: React.FC = () => {
               className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
             >
               <Save className="h-4.5 w-4.5" />
-              <span>Apply Changes</span>
+              <span>{t("applyChanges")}</span>
             </button>
           </div>
         )}

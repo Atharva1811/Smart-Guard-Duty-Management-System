@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { dbHub } from "../db/dbHub";
 import type { SystemUser } from "../db/mockDb";
 import { ShieldCheck, ShieldAlert, Eye, User, Info } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 export const Users: React.FC = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<SystemUser[]>([]);
 
   useEffect(() => {
@@ -30,8 +32,8 @@ export const Users: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">User Profile Management</h1>
-        <p className="text-sm text-muted-foreground mt-1">Review operational roles and system credential access levels.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("usersTitle")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("usersSub")}</p>
       </div>
 
       {/* Info notice about single officer setup */}
