@@ -39,7 +39,7 @@ export const Login: React.FC = () => {
       if (!ok) {
         setError(t("invalidCredentials"));
       }
-    } catch (e) {
+    } catch {
       setError(t("unexpectedError"));
     } finally {
       setIsSubmitting(false);

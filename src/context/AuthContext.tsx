@@ -45,7 +45,7 @@ const decodeMockToken = (token: string): SystemUser | null => {
       role: payload.role,
       email: payload.email
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -53,7 +53,7 @@ const decodeMockToken = (token: string): SystemUser | null => {
 const safeGetItem = (type: "localStorage" | "sessionStorage", key: string): string | null => {
   try {
     return window[type].getItem(key);
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -61,7 +61,7 @@ const safeGetItem = (type: "localStorage" | "sessionStorage", key: string): stri
 const safeSetItem = (type: "localStorage" | "sessionStorage", key: string, value: string): void => {
   try {
     window[type].setItem(key, value);
-  } catch (e) {
+  } catch {
     console.warn(`Could not set ${key} in ${type} due to restrictions.`);
   }
 };
@@ -69,7 +69,7 @@ const safeSetItem = (type: "localStorage" | "sessionStorage", key: string, value
 const safeRemoveItem = (type: "localStorage" | "sessionStorage", key: string): void => {
   try {
     window[type].removeItem(key);
-  } catch (e) {
+  } catch {
     // Ignore
   }
 };

@@ -116,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         await new Promise(r => setTimeout(r, 1000));
         setSyncStatus("success");
       }
-    } catch (e) {
+    } catch {
       setSyncStatus("error");
     } finally {
       setSyncing(false);

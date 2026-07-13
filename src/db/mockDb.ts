@@ -194,7 +194,7 @@ const getStorageItem = <T>(key: string, defaultValue: T): T => {
       return defaultValue;
     }
     return JSON.parse(item);
-  } catch (e) {
+  } catch {
     const item = memoryDbStore[key];
     if (!item) {
       memoryDbStore[key] = JSON.stringify(defaultValue);
@@ -202,7 +202,7 @@ const getStorageItem = <T>(key: string, defaultValue: T): T => {
     }
     try {
       return JSON.parse(item);
-    } catch (err) {
+    } catch {
       return defaultValue;
     }
   }
@@ -211,7 +211,7 @@ const getStorageItem = <T>(key: string, defaultValue: T): T => {
 const setStorageItem = <T>(key: string, value: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
+  } catch {
     memoryDbStore[key] = JSON.stringify(value);
   }
 };
