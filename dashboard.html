@@ -7,6 +7,8 @@
     <title>Smart Guard Duty System - Dashboard Terminal</title>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
   <body>
     <div class="dashboard-container">
@@ -374,6 +376,8 @@
                   <h4 class="font-bold text-sm text-foreground" id="report-preview-title">Report Preview</h4>
                   <div style="display: flex; gap: 0.5rem;">
                     <button id="btn-export-csv" class="quick-btn" data-t="exportCsv">Export CSV</button>
+                    <button id="btn-export-excel" class="quick-btn">Export Excel</button>
+                    <button id="btn-export-pdf" class="quick-btn">Export PDF</button>
                     <button id="btn-print-report" class="quick-btn" data-t="printReport">Print Report</button>
                   </div>
                 </div>

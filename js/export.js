@@ -37,11 +37,67 @@ export const exporter = {
     }
   },
 
-  // Export roster history or lists to Excel file trigger
-  exportToExcel: (filename, headers, rows) => {
-    // Generate as XML spreadsheet structure or CSV with .xls extension
-    // Simple Excel XML spreadsheet structure is supported natively by Excel and maintains column encoding
-    exporter.exportToCSV(filename.replace(/\.xlsx?$/, '') + '.csv', headers, rows);
+  // Export roster history or lists to Excel file trigger using SheetJS (XLSX)
+  exportToExcel: (filename, sheetName, headers, rows) => {
+    try {
+      if (window.XLSX) {
+        const XLSX = window.XLSX;
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
+      } else {
+        // Fallback to CSV if library not loaded
+        exporter.exportToCSV(filename.replace(/\.xlsx?$/, '') + '.csv', headers, rows);
+      }
+    } catch (e) {
+      console.error("Excel generation failed, falling back to CSV:", e);
+      exporter.exportToCSV(filename.replace(/\.xlsx?$/, '') + '.csv', headers, rows);
+    }
+  },
+
+  // Export roster history or list to PDF file trigger using jsPDF
+  exportToPDF: (filename, titleText, headers, rows) => {
+    try {
+      if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(16);
+        doc.text(titleText, 14, 22);
+        
+        doc.setFontSize(10);
+        let y = 35;
+        
+        // Print Headers
+        headers.forEach((h, i) => {
+          doc.text(h, 14 + (i * 38), y);
+        });
+        
+        doc.line(14, y + 2, 200, y + 2);
+        y += 10;
+        
+        // Print Rows
+        rows.forEach(row => {
+          row.forEach((cell, i) => {
+            doc.text(String(cell || ''), 14 + (i * 38), y);
+          });
+          y += 8;
+          if (y > 275) {
+            doc.addPage();
+            y = 20;
+          }
+        });
+        
+        doc.save(filename);
+      } else {
+        alert("PDF export helper library not loaded. Use browser print instead.");
+      }
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+      alert("Failed to compile PDF document: " + e.message);
+    }
   },
 
   // Native Print Roster

@@ -1561,6 +1561,70 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
   }
 });
 
+// Excel Workbook Export trigger
+document.getElementById('btn-export-excel').addEventListener('click', () => {
+  const type = document.getElementById('report-type-select').value;
+  const date = document.getElementById('report-date').value;
+  const lang = localStorage.getItem('language') || 'en';
+
+  if (type === 'daily') {
+    api.getAssignments(date).then(roster => {
+      const headers = ['Checkpoint Location', 'Morning Shift', 'Evening Shift', 'Night Shift'];
+      const rows = STATE.locations.map(loc => {
+        const line = [translateContent(loc.location_name, lang)];
+        ['Morning', 'Evening', 'Night'].forEach(shift => {
+          const match = roster.find(r => r.location_id === loc.id && r.shift === shift);
+          line.push(match && match.guard_name ? translateContent(match.guard_name, lang) : 'Vacant');
+        });
+        return line;
+      });
+      exporter.exportToExcel(`duty_roster_${date}.xlsx`, 'Roster', headers, rows);
+    });
+  } else if (type === 'utilization') {
+    const headers = ['Guard Name', 'Guard Code', 'Department', 'Experience', 'Status'];
+    const rows = STATE.guards.map(g => [
+      translateContent(g.name, lang),
+      g.guard_code,
+      translateContent(g.department, lang),
+      g.experience,
+      translateContent(g.status, lang)
+    ]);
+    exporter.exportToExcel('guard_utilization_report.xlsx', 'Guards', headers, rows);
+  }
+});
+
+// PDF Export trigger
+document.getElementById('btn-export-pdf').addEventListener('click', () => {
+  const type = document.getElementById('report-type-select').value;
+  const date = document.getElementById('report-date').value;
+  const lang = localStorage.getItem('language') || 'en';
+
+  if (type === 'daily') {
+    api.getAssignments(date).then(roster => {
+      const headers = ['Checkpoint Location', 'Morning Shift', 'Evening Shift', 'Night Shift'];
+      const rows = STATE.locations.map(loc => {
+        const line = [translateContent(loc.location_name, lang)];
+        ['Morning', 'Evening', 'Night'].forEach(shift => {
+          const match = roster.find(r => r.location_id === loc.id && r.shift === shift);
+          line.push(match && match.guard_name ? translateContent(match.guard_name, lang) : 'Vacant');
+        });
+        return line;
+      });
+      exporter.exportToPDF(`duty_roster_${date}.pdf`, `Daily Duty Roster - ${date}`, headers, rows);
+    });
+  } else if (type === 'utilization') {
+    const headers = ['Guard Name', 'Guard Code', 'Department', 'Experience', 'Status'];
+    const rows = STATE.guards.map(g => [
+      translateContent(g.name, lang),
+      g.guard_code,
+      translateContent(g.department, lang),
+      g.experience,
+      translateContent(g.status, lang)
+    ]);
+    exporter.exportToPDF('guard_utilization_report.pdf', 'Guard Utilization Report', headers, rows);
+  }
+});
+
 // Print Report preview
 document.getElementById('btn-print-report').addEventListener('click', () => {
   const title = document.getElementById('report-preview-title').textContent;

@@ -4,12 +4,22 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "wrangler pages dev .",
     "dev:api": "wrangler dev worker/index.js --port 8787",
-    "dev:frontend": "wrangler pages dev .",
-    "deploy:api": "wrangler deploy worker/index.js --name smart-guard-duty-system-api",
-    "deploy:frontend": "wrangler pages deploy . --project-name=smart-guard-duty-system"
+    "deploy": "wrangler deploy worker/index.js --name smart-guard-duty-system-api && wrangler pages deploy . --project-name=smart-guard-duty-system",
+    "worker": "wrangler deploy worker/index.js --name smart-guard-duty-system-api",
+    "pages": "wrangler pages deploy . --project-name=smart-guard-duty-system",
+    "build": "echo 'No build required for Vanilla HTML/CSS/JS!'",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
     "wrangler": "^3.60.0"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "xlsx": "^0.18.5"
   }
 }
