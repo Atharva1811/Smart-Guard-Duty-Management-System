@@ -11,6 +11,6 @@ ENVIRONMENT = "production"
 
 [[d1_databases]]
 binding = "DB" # Name used to access D1 in the worker code (env.DB)
-database_name = "smart-guard-duty-db"
-database_id = "YOUR_DATABASE_ID_HERE" # Run 'wrangler d1 create smart-guard-duty-db' and replace this ID
+database_name = "sgds"
+database_id = "40657dd7-daf7-44b3-a737-f5b4c22aecb1"
 migrations_dir = "migrations"
