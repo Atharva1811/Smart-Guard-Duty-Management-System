@@ -1,88 +1,124 @@
-# Smart Guard Duty Management System
+# Smart Guard Duty Management System - Cloudflare Migration
 
-A premium, modern responsive web application for managing daily security guard duty rosters. This application runs entirely serverless, allowing 100% free hosting on **GitHub Pages** with support for two cloud database options: **Google Sheets (via Google Apps Script API)** or **GitHub Repository Storage (JSON database)**.
+This project is a 100% serverless, free-tier Guard Duty Management Dashboard migrated to the Cloudflare stack.
 
----
-
-## 🚀 Features
-
-- **Smart Allocation Engine**: Automatically generates daily rosters respecting shift/location preferences, resting hour rules, rotation indices, and consecutive night shift constraints.
-- **Drag-and-Drop Editor**: Rearrange rosters manually. Supports cells locking (persists edits during auto-regeneration) and complete Undo/Redo tracking.
-- **Conflict Warning Detector**: Real-time alerts for workload limits, double bookings, rest period overlaps, and weekly off violations.
-- **KPI Dashboards**: Operations tracking using Recharts widgets detailing daily statuses, weekly workloads, location schedules, and vacancies.
-- **A4 Printable Reports**: Optimised print layouts for rosters alongside export options to CSV/Excel formats.
-- **Glassmorphic Theme**: Elegant dark and light dashboards styled with Tailwind CSS.
+- **Frontend**: HTML5, CSS3, and Modular ES6 Javascript (SPA architecture) hosted on **Cloudflare Pages**.
+- **Backend API**: **Cloudflare Workers** router.
+- **Database**: **Cloudflare D1** SQLite database.
 
 ---
 
-## 🛠️ Tech Stack
+## Folder Structure
 
-- **Frontend**: React (v19) + Vite, TypeScript, Tailwind CSS, Framer Motion (Transitions), Recharts (KPI Charts), Axios.
-- **Storage Options**:
-  - **Local**: Browser `localStorage` (Immediate offline operation, loaded with demo datasets).
-  - **Google Sheets**: Free cloud storage via Google Apps Script.
-  - **GitHub Repo JSON**: Free cloud storage via GitHub REST API + Personal Access Token.
+```
+/
+├── index.html                   # Login authentication page
+├── dashboard.html               # Main SPA dashboard layout
+├── css/
+│   ├── style.css                # Base color tokens, themes, global CSS
+│   └── dashboard.css            # Sidebar, grids, tables, widgets
+├── js/
+│   ├── api.js                   # REST API client using fetch()
+│   ├── config.js                # API endpoint base configuration
+│   ├── scheduler.js             # Timetable replacement candidate suggestions
+│   ├── ui.js                    # SPA view-pane toggling, drag-and-drop
+│   ├── utils.js                 # Languages translation dictionary, phonetic Marathi
+│   ├── charts.js                # Custom lightweight SVG donut, bar, line charts
+│   ├── filters.js               # Client search and dropdown logic
+│   └── export.js                # Print styling and Excel CSV exporter
+├── worker/
+│   ├── index.js                 # Worker main fetch event handler
+│   ├── routes.js                # API endpoint path router
+│   ├── database.js              # Parameterized SQL prepared statements for D1
+│   ├── scheduler.js             # Backend shift allocation algorithm
+│   └── helpers.js               # JSON formatting and CORS headers
+├── migrations/
+│   ├── 001_schema.sql           # Database schema tables
+│   ├── 002_indexes.sql          # DB performance optimization indexes
+│   └── seed.sql                 # Seed database with sample guards and locations
+├── wrangler.toml                # Cloudflare wrangler binding variables
+├── .github/workflows/deploy.yml # Auto deployment GitHub Action
+└── README.md                    # Project manual & installation steps
+```
 
 ---
 
-## 📦 Installation & Setup
+## Local Setup & Development
 
-1. **Clone and Install**:
+### 1. Prerequisites
+Install [Node.js](https://nodejs.org) (v18 or higher recommended).
+
+### 2. Install Project Dependencies
+Run the installation command to fetch wrangler:
+```bash
+npm install
+```
+
+### 3. Log in to Cloudflare wrangler
+Authenticate your terminal with your Cloudflare account credentials:
+```bash
+npx wrangler login
+```
+
+### 4. Create Cloudflare D1 SQL Database
+Run the command to spin up a new D1 database instance:
+```bash
+npx wrangler d1 create smart-guard-duty-db
+```
+This command output will show your **`database_id`**. Copy this ID and paste it in `wrangler.toml` in the `database_id` field:
+```toml
+database_id = "your-copied-database-id"
+```
+
+### 5. Apply SQL Database Migrations
+Initialize the tables and seed default guards/locations by running the migrations locally and on production:
+```bash
+# Apply migrations locally
+npx wrangler d1 migrations apply smart-guard-duty-db --local
+
+# Apply migrations to live production D1 database
+npx wrangler d1 migrations apply smart-guard-duty-db --remote
+```
+
+### 6. Run Worker API & Frontend Locally
+Run the local wrangler development server:
+```bash
+# Start Workers API on localhost:8787
+npx wrangler dev worker/index.js --port 8787
+
+# Serve HTML/JS static files
+npx wrangler pages dev .
+```
+
+---
+
+## Cloudflare Deployment
+
+### 1. Manual CLI Deployments
+Deploy Workers and Pages directly via Wrangler:
+```bash
+# Deploy Backend API Workers
+npx wrangler deploy worker/index.js --name smart-guard-duty-system-api
+
+# Deploy Pages Frontend
+npx wrangler pages deploy . --project-name=smart-guard-duty-system
+```
+
+### 2. Continuous Integration via GitHub
+You can configure automatic build-and-deploys upon pushing to the `main` branch:
+1. Put your repo on GitHub.
+2. In your repository settings, go to **Settings > Secrets and variables > Actions** and create two Secrets:
+   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API Token (with Edit Cloudflare Workers and Pages permission).
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
+3. Once pushed, GitHub Actions will build and deploy the Workers and Pages instantly.
+
+---
+
+## Database Schema Migrations
+
+To perform updates or migrations to the SQL schema in the future:
+1. Create a new SQL file under `/migrations` (e.g. `003_add_new_column.sql`).
+2. Run wrangler to register and apply it:
    ```bash
-   npm install
+   npx wrangler d1 migrations apply smart-guard-duty-db --remote
    ```
-
-2. **Run in Development**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Production Compilation**:
-   ```bash
-   npm run build
-   ```
-
-4. **Verify Locally**:
-   ```bash
-   npm run preview
-   ```
-
----
-
-## 📊 Google Sheets Database Configuration
-
-To use Google Sheets as your primary database:
-
-1. Create a new **Google Spreadsheet**.
-2. Go to **Extensions > Apps Script**.
-3. Copy the content of the `google-apps-script/code.gs` file into the editor.
-4. Click **Deploy > New Deployment**.
-5. Select type **Web App**.
-6. Set:
-   - *Execute as*: **Me**
-   - *Who has access*: **Anyone** (required to bypass CORS/Auth redirection triggers).
-7. Copy the **Web App URL** provided after deployment.
-8. Paste the Web App URL and Spreadsheet ID into the **Settings** panel of the application, and toggle **Enable Google Sheets Sync**.
-
----
-
-## 🐙 GitHub Repository Storage Configuration
-
-To store data directly in GitHub as a file (perfect for multi-PC access without Google Drive):
-
-1. Create a **Private or Public Repository** on GitHub (e.g. `guard-duty-data`).
-2. Generate a **GitHub Personal Access Token (PAT)** with `repo` write scopes.
-3. In the application **Settings** panel:
-   - Enter **Repository Owner** (your GitHub username).
-   - Enter **Repo Name** (the repository name).
-   - Paste your **Personal Access Token**.
-   - Set **FilePath** (e.g., `guard_duty_db.json`).
-   - Toggle **Enable GitHub Database**.
-
----
-
-## 👤 Credentials (Quick Demo)
-
-- **Admin**: Username: `admin` | Password: `admin123` (Full Access)
-- **Supervisor**: Username: `supervisor` | Password: `supervisor123` (Edit & Generate Access)
-- **Viewer**: Username: `viewer` | Password: `viewer123` (Read-only Access)

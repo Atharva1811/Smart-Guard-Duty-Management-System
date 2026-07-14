@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Guard Duty System - Dashboard Terminal</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      
+      <!-- Sidebar Navigation Panel (Responsive) -->
+      <aside id="sidebar" class="sidebar no-print">
+        <div class="sidebar-header">
+          <a href="#" class="nav-brand flex items-center gap-2" style="text-decoration: none;">
+            <svg style="width: 24px; height: 24px; fill: var(--primary);" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <span class="font-bold text-lg" style="background: linear-gradient(135deg, var(--primary), #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SmartGuard</span>
+          </a>
+          <button id="sidebar-close" class="md:hidden" style="color: var(--muted-foreground); font-size: 1.25rem;">&times;</button>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#dashboard" class="nav-link active" data-view="dashboard">
+            <span class="nav-icon">📊</span>
+            <span data-t="dashboard">Dashboard</span>
+          </a>
+          <a href="#duty" class="nav-link" data-view="duty">
+            <span class="nav-icon">📅</span>
+            <span data-t="todaysDuty">Today's Duty</span>
+          </a>
+          <a href="#guards" class="nav-link" data-view="guards">
+            <span class="nav-icon">👮</span>
+            <span data-t="guards">Guards</span>
+          </a>
+          <a href="#locations" class="nav-link" data-view="locations">
+            <span class="nav-icon">📍</span>
+            <span data-t="locations">Locations</span>
+          </a>
+          <a href="#availability" id="nav-link-availability" class="nav-link" data-view="availability">
+            <span class="nav-icon">✅</span>
+            <span data-t="availability">Availability</span>
+          </a>
+          <a href="#leaves" class="nav-link" data-view="leaves">
+            <span class="nav-icon">📝</span>
+            <span data-t="leaves">Leaves</span>
+          </a>
+          <a href="#reports" class="nav-link" data-view="reports">
+            <span class="nav-icon">📉</span>
+            <span data-t="reports">Reports</span>
+          </a>
+          <a href="#users" id="nav-link-users" class="nav-link" data-view="users">
+            <span class="nav-icon">👥</span>
+            <span data-t="users">Users</span>
+          </a>
+          <a href="#settings" id="nav-link-settings" class="nav-link" data-view="settings">
+            <span class="nav-icon">⚙️</span>
+            <span data-t="settings">Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="flex items-center gap-3 mb-4">
+            <div id="user-avatar" class="h-10 w-10 rounded-full flex items-center justify-center font-bold text-white" style="background-color: var(--primary); min-width: 40px;">U</div>
+            <div style="overflow: hidden;">
+              <p id="user-name" class="text-sm font-semibold truncate text-foreground">Loading...</p>
+              <span id="user-role-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white uppercase" style="background: var(--primary);">OFFICER</span>
+            </div>
+          </div>
+          <button id="logout-btn" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors" style="color: var(--rose-text); background: rgba(239, 68, 68, 0.05); text-align: left;">
+            <span>🚪</span>
+            <span data-t="logout">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Layout Body -->
+      <main class="main-content">
+        <!-- Top Navbar -->
+        <header class="navbar no-print">
+          <div class="flex items-center gap-4">
+            <button id="sidebar-toggle" class="md:hidden" style="color: var(--foreground); font-size: 1.5rem;">&#9776;</button>
+            <div class="text-xs text-muted-foreground hidden sm:block">
+              <span id="nav-time-display">Time: --:--:--</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Language and Theme Switchers -->
+            <button id="lang-toggle-btn" class="px-3.5 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground transition-all shadow-sm">
+              मराठी
+            </button>
+            <button id="theme-toggle-btn" class="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition-all shadow-sm" title="Toggle Theme">
+              🌙
+            </button>
+
+            <!-- Notification Bell -->
+            <div class="relative">
+              <button id="notif-btn" class="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition-all shadow-sm" title="Notifications">
+                🔔 <span id="notif-badge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full text-[10px] w-4.5 h-4.5 flex items-center justify-center font-bold hidden">0</span>
+              </button>
+              <!-- Notif Dropdown -->
+              <div id="notif-dropdown" class="absolute right-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-lg p-4 hidden z-40">
+                <h4 class="font-bold text-sm text-foreground border-b pb-2 mb-2">Notifications</h4>
+                <div id="notif-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto text-xs text-muted-foreground">
+                  No new alerts.
+                </div>
+              </div>
+            </div>
+            
+            <!-- Audit Log Trigger -->
+            <button id="audit-btn" class="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition-all shadow-sm" title="System Audit Logs">
+              📋
+            </button>
+          </div>
+        </header>
+
+        <!-- Dynamic Main Views -->
+        <div id="main-body" class="content-body">
+          
+          <!-- VIEW: DASHBOARD (Overview) -->
+          <div id="view-dashboard" class="view-pane space-y-6">
+            <div>
+              <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="overview">Operational Overview</h1>
+              <p class="text-sm text-muted-foreground mt-1" data-t="overviewSub">Real-time status updates and scheduling statistics dashboard.</p>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-4 gap-4">
+              <div class="card flex items-center gap-4">
+                <div style="font-size: 2.25rem;">👮</div>
+                <div>
+                  <p class="text-xs text-muted-foreground font-semibold" data-t="totalGuards">Total Guards</p>
+                  <h3 id="stat-total-guards" class="text-2xl font-bold text-foreground">0</h3>
+                </div>
+              </div>
+              <div class="card flex items-center gap-4">
+                <div style="font-size: 2.25rem;">✅</div>
+                <div>
+                  <p class="text-xs text-muted-foreground font-semibold" data-t="availableToday">Available Today</p>
+                  <h3 id="stat-available-guards" class="text-2xl font-bold text-foreground">0</h3>
+                </div>
+              </div>
+              <div class="card flex items-center gap-4">
+                <div style="font-size: 2.25rem;">📝</div>
+                <div>
+                  <p class="text-xs text-muted-foreground font-semibold" data-t="guardsOnLeave">Guards on Leave</p>
+                  <h3 id="stat-leave-guards" class="text-2xl font-bold text-foreground">0</h3>
+                </div>
+              </div>
+              <div class="card flex items-center gap-4">
+                <div style="font-size: 2.25rem;">⚠️</div>
+                <div>
+                  <p class="text-xs text-muted-foreground font-semibold" data-t="vacantSpots">Vacant Spots</p>
+                  <h3 id="stat-vacant-spots" class="text-2xl font-bold text-foreground">0</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shift Distributions -->
+            <div class="grid grid-cols-4 gap-4">
+              <div class="card">
+                <p class="text-xs text-muted-foreground font-semibold" data-t="morningShift">Morning Shift</p>
+                <h3 id="stat-morning-count" class="text-2xl font-bold text-foreground">0</h3>
+              </div>
+              <div class="card">
+                <p class="text-xs text-muted-foreground font-semibold" data-t="eveningShift">Evening Shift</p>
+                <h3 id="stat-evening-count" class="text-2xl font-bold text-foreground">0</h3>
+              </div>
+              <div class="card">
+                <p class="text-xs text-muted-foreground font-semibold" data-t="nightShift">Night Shift</p>
+                <h3 id="stat-night-count" class="text-2xl font-bold text-foreground">0</h3>
+              </div>
+              <div class="card">
+                <p class="text-xs text-muted-foreground font-semibold" data-t="rosterCoverage">Roster Coverage</p>
+                <h3 id="stat-coverage-percent" class="text-2xl font-bold text-foreground">0%</h3>
+              </div>
+            </div>
+
+            <!-- Charts Panels -->
+            <div class="grid grid-cols-2 gap-6">
+              <div class="card">
+                <h4 class="font-bold text-sm text-foreground mb-4" data-t="availabilityBreakup">Guard Availability Breakup</h4>
+                <div id="chart-pie-container" class="flex justify-center items-center h-48"></div>
+              </div>
+              <div class="card">
+                <h4 class="font-bold text-sm text-foreground mb-4" data-t="locationOccupancy">Location Guard Occupancy</h4>
+                <div id="chart-bar-container" class="h-48"></div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <h4 class="font-bold text-sm text-foreground mb-4" data-t="coverageHistory">Roster Coverage History</h4>
+              <div id="chart-line-container" class="h-48"></div>
+            </div>
+          </div>
+
+          <!-- VIEW: TODAY'S DUTY (Timetable Grid) -->
+          <div id="view-duty" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="rosterMgmt">Roster Management</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="rosterMgmtSub">Review, generate, and customize security guard shifts.</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="date" id="roster-date-picker" style="width: auto;" />
+                <button id="btn-generate-roster" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="autoAllocate">Auto-Allocate</button>
+              </div>
+            </div>
+
+            <!-- Timetable Roster Table -->
+            <div class="card">
+              <div id="roster-table-parent" class="roster-table-container">
+                <!-- Populated dynamically via JS -->
+              </div>
+              <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button id="btn-print-duty" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;">Print Timetable</button>
+                <button id="btn-save-duty" style="background: #10b981; color: white; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="save">Save</button>
+              </div>
+            </div>
+
+            <!-- Panel layouts: Conflicts & Shortages -->
+            <div class="grid grid-cols-2 gap-6">
+              <div class="card">
+                <h4 class="font-bold text-sm text-foreground mb-4" data-t="conflictDetect">Conflict Detection</h4>
+                <div id="conflict-list" class="space-y-2 text-xs text-muted-foreground">
+                  All assigned cells are verified conflict-free.
+                </div>
+              </div>
+              <div class="card">
+                <h4 class="font-bold text-sm text-foreground mb-4" data-t="shortagesVacancies">Shortages & Vacant Locations</h4>
+                <div id="shortage-list" class="space-y-2 text-xs text-muted-foreground">
+                  All required locations are fully staffed today.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: GUARDS LIST (CRUD) -->
+          <div id="view-guards" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="guardsTitle">Guards Roster Database</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="guardsSub">Manage personnel records, shift schedules, and assignments preferences.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-import-guards" class="quick-btn" style="color: var(--foreground);">&uarr; Bulk Import</button>
+                <button id="btn-add-guard" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="addGuard">Add Guard</button>
+              </div>
+            </div>
+
+            <!-- Filter Toolbar -->
+            <div class="card flex gap-4" style="display: flex; flex-wrap: wrap;">
+              <input type="text" id="guard-search-input" placeholder="Search by ID, Name or Department..." style="max-width: 320px;" />
+              <select id="guard-filter-status" style="max-width: 160px;"></select>
+              <select id="guard-filter-shift" style="max-width: 160px;"></select>
+            </div>
+
+            <!-- List Grid -->
+            <div id="guards-grid-list" class="grid grid-cols-3 gap-6">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW: LOCATIONS LIST (CRUD) -->
+          <div id="view-locations" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="locationsTitle">Operational Locations</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="locationsSub">Configure security checkpoints, shifts timings, and staffing requirements.</p>
+              </div>
+              <button id="btn-add-location" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="addLocation">Add Location</button>
+            </div>
+
+            <!-- Search bar -->
+            <div class="card flex gap-4">
+              <input type="text" id="location-search-input" placeholder="Search by location name or zone..." style="max-width: 320px;" />
+            </div>
+
+            <!-- Locations Grid -->
+            <div id="locations-grid-list" class="grid grid-cols-3 gap-6">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW: AVAILABILITY (Attendance Marking) -->
+          <div id="view-availability" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="availabilityTitle">Daily Guard Attendance</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="availabilitySub">Mark attendance, availability status, and remarks for today's shifts.</p>
+              </div>
+              <input type="date" id="attendance-date-picker" style="width: auto;" />
+            </div>
+
+            <div class="card">
+              <table class="roster-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th data-t="guardNameCol">Guard Name</th>
+                    <th data-t="statusCol">Status Code</th>
+                    <th data-t="notesCol">Notes / Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="attendance-table-body">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+              <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button id="btn-save-attendance" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="save">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: LEAVES (Leave Requests Panel) -->
+          <div id="view-leaves" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="leavesTitle">Leave Management Registry</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="leavesSub">Submit, approve, or reject security guard leave requests.</p>
+              </div>
+              <button id="btn-apply-leave" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="applyLeave">Request Leave</button>
+            </div>
+
+            <div class="card">
+              <table class="roster-table">
+                <thead>
+                  <tr>
+                    <th>Guard Name</th>
+                    <th>Date Interval</th>
+                    <th data-t="leaveReason">Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leaves-table-body">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- VIEW: REPORTS VIEW -->
+          <div id="view-reports" class="view-pane space-y-6 hidden">
+            <div>
+              <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="reportsTitle">Analytics & Reports</h1>
+              <p class="text-sm text-muted-foreground mt-1" data-t="reportsSub">Compile stats, review coverage metrics, and export CSV/A4 documents.</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6" style="grid-template-columns: 240px 1fr;">
+              <!-- Sidebar Selectors -->
+              <div class="card space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Report Type</label>
+                  <select id="report-type-select">
+                    <option value="daily">Daily Duty Roster</option>
+                    <option value="utilization">Guard Utilization Stats</option>
+                    <option value="occupancy">Location Occupancy</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Date Parameter</label>
+                  <input type="date" id="report-date" />
+                </div>
+                <button id="btn-run-report" style="width: 100%; background: var(--primary); color: var(--primary-foreground); padding: 0.5rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Generate Report</button>
+              </div>
+
+              <!-- Report Container Preview -->
+              <div class="card space-y-4">
+                <div class="flex justify-between items-center" style="display: flex; justify-content: space-between;">
+                  <h4 class="font-bold text-sm text-foreground" id="report-preview-title">Report Preview</h4>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-export-csv" class="quick-btn" data-t="exportCsv">Export CSV</button>
+                    <button id="btn-print-report" class="quick-btn" data-t="printReport">Print Report</button>
+                  </div>
+                </div>
+
+                <div id="report-preview-container" style="overflow-x: auto;">
+                  <p class="text-xs text-muted-foreground">Run a report query to view details.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: USERS VIEW -->
+          <div id="view-users" class="view-pane space-y-6 hidden">
+            <div class="flex justify-between items-center" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="usersTitle">User Management</h1>
+                <p class="text-sm text-muted-foreground mt-1" data-t="usersSub">Assign roles (Admin, Supervisor, Viewer) and credentials profiles.</p>
+              </div>
+              <button id="btn-add-user" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="addUser">Add User</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6" id="users-card-list">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW: SETTINGS VIEW -->
+          <div id="view-settings" class="view-pane space-y-6 hidden">
+            <div>
+              <h1 class="text-3xl font-bold tracking-tight text-foreground" data-t="settingsTitle">System Settings Console</h1>
+              <p class="text-sm text-muted-foreground mt-1" data-t="settingsSub">Adjust shift schedules, rotation limits, and SQLite D1 API parameters.</p>
+            </div>
+
+            <form id="settings-form" class="space-y-6">
+              <div class="grid grid-cols-2 gap-6">
+                <!-- Shift timings -->
+                <div class="card space-y-4">
+                  <h3 class="font-bold text-sm text-foreground flex items-center gap-2">⏱️ <span data-t="shiftTimingSlots">Shift Timing Slots</span></h3>
+                  <div>
+                    <label class="block font-semibold mb-1">Morning Shift</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                      <input type="time" id="set-shift-morning-start" /> <span>to</span> <input type="time" id="set-shift-morning-end" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1">Evening Shift</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                      <input type="time" id="set-shift-evening-start" /> <span>to</span> <input type="time" id="set-shift-evening-end" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1">Night Shift</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                      <input type="time" id="set-shift-night-start" /> <span>to</span> <input type="time" id="set-shift-night-end" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Rotation rules -->
+                <div class="card space-y-4">
+                  <h3 class="font-bold text-sm text-foreground flex items-center gap-2">🔄 <span data-t="rotationRules">Rotation Rules & Rest Limits</span></h3>
+                  <div>
+                    <label class="block font-semibold mb-1">Max Consecutive Shifts</label>
+                    <input type="number" id="set-consec-days" min="1" max="10" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1">Max Night Shifts Per Week</label>
+                    <input type="number" id="set-night-limit" min="1" max="7" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1">Rest Period Between Shifts (Hours)</label>
+                    <input type="number" id="set-rest-hours" min="4" max="24" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- D1 settings database config -->
+              <div class="card space-y-4">
+                <h3 class="font-bold text-sm text-foreground flex items-center gap-2">☁️ <span data-t="githubSync">Cloudflare D1 Connection Sync</span></h3>
+                <div>
+                  <label class="block font-semibold mb-1">API Base URL</label>
+                  <input type="text" id="set-api-url" placeholder="https://smart-guard-duty-system-api.yoursubdomain.workers.dev" />
+                  <p class="text-[10px] text-muted-foreground mt-1">Leave empty to use relative `/api` path when hosted together under Pages/Workers.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" style="background: #10b981; color: white; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;" data-t="applyChanges">Apply Changes</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="p-4 border-t border-border text-center text-xs text-muted-foreground no-print" style="margin-top: auto;">
+          Made with ❤️ by <a href="https://github.com/Atharva1811" target="_blank" class="text-primary hover:underline">Atharva Deshmukh</a>
+        </footer>
+      </main>
+
+      <!-- SYSTEM AUDIT LOG DRAWER -->
+      <div id="audit-drawer" class="fixed right-0 top-0 h-full w-80 bg-card border-l border-border shadow-xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col no-print">
+        <div class="p-4 border-b border-border flex items-center justify-between">
+          <h3 class="font-bold text-sm">System Audit Logs</h3>
+          <button id="audit-close-btn" style="font-size: 1.25rem;">&times;</button>
+        </div>
+        <div id="audit-logs-list" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- MODAL: ADD/EDIT GUARD -->
+      <div id="guard-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="guard-modal-title" class="font-bold">Add Guard Profile</h3>
+            <button class="modal-close" id="btn-close-guard-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="guard-form" class="space-y-4">
+              <input type="hidden" id="guard-form-id" />
+              <div>
+                <label class="block text-xs font-semibold mb-1">Guard Code (Unique)</label>
+                <input type="text" id="guard-form-code" placeholder="G001" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Full Name</label>
+                <input type="text" id="guard-form-name" placeholder="John Doe" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Phone Number</label>
+                <input type="text" id="guard-form-phone" placeholder="+91 9999999999" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Email</label>
+                <input type="email" id="guard-form-email" placeholder="john.doe@company.com" />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Age</label>
+                  <input type="number" id="guard-form-age" min="18" max="65" value="30" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Experience (Years)</label>
+                  <input type="number" id="guard-form-exp" min="0" max="40" value="2" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Gender</label>
+                  <select id="guard-form-gender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Shift Preference</label>
+                  <select id="guard-form-preference">
+                    <option value="Any">Any</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Weekly Off Day</label>
+                  <select id="guard-form-off">
+                    <option value="0">Sunday</option>
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Status</label>
+                  <select id="guard-form-status">
+                    <option value="Available">Available</option>
+                    <option value="Leave">Leave</option>
+                    <option value="Training">Training</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Medical">Medical</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn-cancel" id="btn-cancel-guard-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+                <button type="submit" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: BULK IMPORT GUARDS -->
+      <div id="import-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="font-bold">Bulk Import Guards</h3>
+            <button class="modal-close" id="btn-close-import-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body space-y-4">
+            <p class="text-xs text-muted-foreground">Paste comma-separated names or drag/upload a `.csv` or `.txt` text file to import names directly.</p>
+            <textarea id="import-textarea" rows="6" placeholder="John Doe, Robert Smith, Michael Green" style="resize: none;"></textarea>
+            <div class="modal-footer">
+              <button type="button" id="btn-cancel-import-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+              <button type="button" id="btn-submit-import" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Import Profiles</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: ADD/EDIT LOCATION -->
+      <div id="location-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="location-modal-title" class="font-bold">Add Location</h3>
+            <button class="modal-close" id="btn-close-location-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="location-form" class="space-y-4">
+              <input type="hidden" id="location-form-id" />
+              <div>
+                <label class="block text-xs font-semibold mb-1">Location Name</label>
+                <input type="text" id="location-form-name" placeholder="Front Gate Entrance" required />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Required Guards Count</label>
+                  <input type="number" id="location-form-count" min="1" max="5" value="1" required />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Priority Level</label>
+                  <select id="location-form-priority">
+                    <option value="1">High Priority (High)</option>
+                    <option value="2">Medium Priority (Medium)</option>
+                    <option value="3">Low Priority (Low)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Security Level Tag</label>
+                <select id="location-form-security">
+                  <option value="Critical">Critical</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5">Shift Requirements</label>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" id="loc-shift-morning" style="width: auto;" checked /> <label for="loc-shift-morning" class="text-xs">Morning</label>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" id="loc-shift-evening" style="width: auto;" checked /> <label for="loc-shift-evening" class="text-xs">Evening</label>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" id="loc-shift-night" style="width: auto;" checked /> <label for="loc-shift-night" class="text-xs">Night</label>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="btn-cancel-location-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+                <button type="submit" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: MANUAL ASSIGN / REASSIGN DRAG AND CELL DIALOG -->
+      <div id="reassign-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="font-bold">Manual Assignment Override</h3>
+            <button class="modal-close" id="btn-close-reassign-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body space-y-4">
+            <input type="hidden" id="reassign-location-id" />
+            <input type="hidden" id="reassign-shift" />
+            
+            <p class="text-xs text-muted-foreground">Select a security officer to assign to <strong id="reassign-label-location"></strong> on the <strong id="reassign-label-shift"></strong> shift.</p>
+            
+            <div>
+              <label class="block text-xs font-semibold mb-1">Recommended Candidates</label>
+              <select id="reassign-guard-select">
+                <!-- Populated dynamically via JS -->
+              </select>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" id="btn-remove-assignment" style="background: var(--rose-alpha); color: var(--rose-text); border: 1px solid var(--rose-text); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; margin-right: auto;">Remove Guard</button>
+              <button type="button" id="btn-cancel-reassign-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+              <button type="button" id="btn-submit-reassign" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Assign Override</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: REQUEST LEAVE -->
+      <div id="leave-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="font-bold" data-t="applyLeave">Request Leave</h3>
+            <button class="modal-close" id="btn-close-leave-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="leave-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold mb-1">Select Guard</label>
+                <select id="leave-form-guard" required></select>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1" data-t="startDate">Start Date</label>
+                  <input type="date" id="leave-form-start" required />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1" data-t="endDate">End Date</label>
+                  <input type="date" id="leave-form-end" required />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1" data-t="leaveReason">Reason</label>
+                <textarea id="leave-form-reason" rows="3" placeholder="Medical rest, personal affairs..." required></textarea>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="btn-cancel-leave-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+                <button type="submit" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: ADD NEW USER -->
+      <div id="user-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="font-bold" data-t="addUser">Add New User</h3>
+            <button class="modal-close" id="btn-close-user-modal" style="font-size: 1.25rem;">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="user-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold mb-1">Username</label>
+                <input type="text" id="user-form-username" placeholder="e.g. officer2" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Login Key Passcode</label>
+                <input type="password" id="user-form-passcode" placeholder="e.g. password123" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Full Name</label>
+                <input type="text" id="user-form-name" placeholder="Officer Name" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Email</label>
+                <input type="email" id="user-form-email" placeholder="officer@smartguard.com" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Role / Permissions Scope</label>
+                <select id="user-form-role">
+                  <option value="Supervisor">Supervisor (Read + Edit rosters)</option>
+                  <option value="Admin">Admin (Full administrative credentials)</option>
+                  <option value="Viewer">Viewer (Read-only access)</option>
+                </select>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="btn-cancel-user-modal" style="border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">Cancel</button>
+                <button type="submit" style="background: var(--primary); color: var(--primary-foreground); padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Application Controller Bootloader -->
+    <script type="module" src="js/ui.js"></script>
+  </body>
+</html>

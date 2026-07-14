@@ -1,0 +1,16 @@
+# wrangler.toml
+# Cloudflare Worker configuration for Guard Duty Management System
+
+name = "smart-guard-duty-system-api"
+main = "worker/index.js"
+compatibility_date = "2024-04-01"
+
+[vars]
+# Add any environment variables here if needed
+ENVIRONMENT = "production"
+
+[[d1_databases]]
+binding = "DB" # Name used to access D1 in the worker code (env.DB)
+database_name = "smart-guard-duty-db"
+database_id = "YOUR_DATABASE_ID_HERE" # Run 'wrangler d1 create smart-guard-duty-db' and replace this ID
+migrations_dir = "migrations"
