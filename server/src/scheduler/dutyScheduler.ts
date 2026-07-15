@@ -151,6 +151,40 @@ export const generateRosterSchedule = async (
     }
   });
 
+  // 4. Sticky assignment logic: Appoint yesterday's guard to the same spot/shift today (consecutive 6-day cycle)
+  const yesterdayObj = new Date(dateObj.getTime() - 86400000);
+  const yesterdayStr = yesterdayObj.toISOString().split('T')[0];
+
+  availableGuards.forEach(g => {
+    if (assignedGuardIds.has(g.id)) return;
+
+    // Find yesterday's assignment in history logs
+    const yesterdayAssign = history.find(h => h.assignmentDate === yesterdayStr && h.guardId === g.id);
+    if (yesterdayAssign) {
+      const locId = yesterdayAssign.locationId;
+      const shift = yesterdayAssign.shift;
+
+      const loc = locations.find(l => l.id === locId);
+      if (loc) {
+        const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+        const isValidShift = activeShifts.includes(shift) || shift === 'Reserve';
+
+        if (isValidShift) {
+          const currentCell = roster[locId][shift];
+          if (!currentCell || !currentCell.locked) {
+            roster[locId][shift] = {
+              guard_id: g.id,
+              guard_name: g.name,
+              guard_code: g.guardCode,
+              locked: false
+            };
+            assignedGuardIds.add(g.id);
+          }
+        }
+      }
+    }
+  });
+
   // Sort locations by priority (1 is highest priority Critical security check)
   const sortedLocations = [...locations].sort((a, b) => a.priority - b.priority);
 

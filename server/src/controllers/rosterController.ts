@@ -92,8 +92,30 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
 
     // 2. Perform DB operations inside transaction
     await prisma.$transaction(async (tx) => {
-      // Delete existing
+      // Delete existing for target date
       await tx.dutyAssignment.deleteMany({ where: { assignmentDate: date } });
+
+      // Prune records older than 3 days before target date
+      const currentDate = new Date(date);
+      const thresholdDate = new Date(currentDate);
+      thresholdDate.setDate(currentDate.getDate() - 3);
+      const thresholdDateStr = thresholdDate.toISOString().split('T')[0];
+
+      await tx.dutyAssignment.deleteMany({
+        where: {
+          assignmentDate: {
+            lt: thresholdDateStr
+          }
+        }
+      });
+
+      await tx.assignmentHistory.deleteMany({
+        where: {
+          assignmentDate: {
+            lt: thresholdDateStr
+          }
+        }
+      });
 
       // Bulk Insert assignments
       if (assignmentsToInsert.length > 0) {
