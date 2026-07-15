@@ -1,0 +1,595 @@
+// client/src/pages/TodayDuty.tsx
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../context/LanguageContext.tsx';
+import { api } from '../config/api.ts';
+import { exportToCSV, exportToPDF } from '../utils/export.ts';
+import { 
+  Printer, 
+  RefreshCw, 
+  Save, 
+  Trash2, 
+  Lock, 
+  Unlock, 
+  AlertCircle, 
+  UserCheck, 
+  UserMinus,
+  AlertTriangle
+} from 'lucide-react';
+
+export const TodayDuty: React.FC = () => {
+  const { t, translateText } = useTranslation();
+  const [activeDate, setActiveDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [guards, setGuards] = useState<any[]>([]);
+  const [roster, setRoster] = useState<any[]>([]);
+  
+  // Conflicts and shortages
+  const [conflicts, setConflicts] = useState<any[]>([]);
+  const [shortages, setShortages] = useState<any[]>([]);
+  const [vacantLocations, setVacantLocations] = useState<string[]>([]);
+  
+  // Loading and modals states
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [generating, setGenerating] = useState<boolean>(false);
+  
+  // Reassign Modal
+  const [showOverride, setShowOverride] = useState<boolean>(false);
+  const [overrideLoc, setOverrideLoc] = useState<any>(null);
+  const [overrideShift, setOverrideShift] = useState<string>('');
+  const [overrideGuardId, setOverrideGuardId] = useState<string>('');
+  const [candidates, setCandidates] = useState<any[]>([]);
+
+  // Drag and drop local state cache
+  const [draggedCell, setDraggedCell] = useState<{ locationId: number; shift: string } | null>(null);
+
+  const loadData = async (dateStr: string) => {
+    setLoading(true);
+    try {
+      const [locsRes, guardsRes, rosterRes] = await Promise.all([
+        api.get('/api/locations'),
+        api.get('/api/guards'),
+        api.get(`/api/roster/assignments?date=${dateStr}`)
+      ]);
+
+      const locs = locsRes.data.data;
+      const gList = guardsRes.data.data;
+      const assignments = rosterRes.data.data;
+
+      setLocations(locs);
+      setGuards(gList);
+
+      // If no assignments exist on backend, pre-populate vacant structure
+      if (assignments.length === 0) {
+        const vacantRoster: any[] = [];
+        locs.forEach((l: any) => {
+          const activeShifts = (l.shift || 'Morning,Evening,Night').split(',');
+          activeShifts.forEach((s: string) => {
+            vacantRoster.push({
+              location_id: l.id,
+              location_name: l.locationName,
+              shift: s,
+              guard_id: null,
+              guard_name: null,
+              guard_code: null,
+              status: 'Vacant',
+              assignment_date: dateStr
+            });
+          });
+          // Add Reserve shift
+          vacantRoster.push({
+            location_id: l.id,
+            location_name: l.locationName,
+            shift: 'Reserve',
+            guard_id: null,
+            guard_name: null,
+            guard_code: null,
+            status: 'Vacant',
+            assignment_date: dateStr
+          });
+        });
+        setRoster(vacantRoster);
+      } else {
+        setRoster(assignments);
+      }
+    } catch (err) {
+      console.error('Failed to load roster data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData(activeDate);
+  }, [activeDate]);
+
+  // Sync conflicts and shortages on roster changes
+  useEffect(() => {
+    if (roster.length > 0) {
+      // 1. Detect shortages
+      const shortList: any[] = [];
+      const vacantLocs: string[] = [];
+      
+      locations.forEach(loc => {
+        const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+        let locVacant = false;
+
+        activeShifts.forEach(s => {
+          const match = roster.find(r => r.location_id === loc.id && r.shift === s);
+          if (!match || !match.guard_id) {
+            locVacant = true;
+            shortList.push({
+              locationId: loc.id,
+              locationName: loc.locationName,
+              shift: s
+            });
+          }
+        });
+
+        if (locVacant) {
+          vacantLocs.push(loc.locationName);
+        }
+      });
+
+      setShortages(shortList);
+      setVacantLocations(vacantLocs);
+
+      // 2. Fetch conflicts list from backend
+      api.post('/api/roster/conflicts', { date: activeDate, roster })
+        .then(res => {
+          if (res.data.success) setConflicts(res.data.data);
+        })
+        .catch(err => console.error('Error checking conflicts:', err));
+    }
+  }, [roster, locations, activeDate]);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setActiveDate(e.target.value);
+  };
+
+  // Trigger auto allocation from backend engine
+  const handleAutoAllocate = async () => {
+    setGenerating(true);
+    try {
+      const lockedList = roster
+        .filter(r => r.status === 'Locked' && r.guard_id)
+        .map(r => ({
+          location_id: r.location_id,
+          shift: r.shift,
+          guard_id: r.guard_id,
+          guard_name: r.guard_name
+        }));
+
+      const res = await api.post('/api/roster/generate', {
+        date: activeDate,
+        lockedAssignments: lockedList
+      });
+
+      if (res.data.success) {
+        const generatedRoster = res.data.data.roster;
+        const newRoster = [...roster];
+
+        newRoster.forEach(cell => {
+          // If locked, skip
+          if (cell.status === 'Locked') return;
+
+          const locationData = generatedRoster[cell.location_id];
+          const shiftData = locationData ? locationData[cell.shift] : null;
+
+          if (shiftData) {
+            const guard = guards.find(g => g.id === shiftData.guard_id);
+            cell.guard_id = shiftData.guard_id;
+            cell.guard_name = shiftData.guard_name;
+            cell.guard_code = guard ? guard.guardCode : '??';
+            cell.status = 'Assigned';
+          } else {
+            cell.guard_id = null;
+            cell.guard_name = null;
+            cell.guard_code = null;
+            cell.status = 'Vacant';
+          }
+        });
+
+        setRoster(newRoster);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Timetable generation failed.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // Save roster timetable to backend PostgreSQL
+  const handleSaveRoster = async () => {
+    setSaving(true);
+    try {
+      const formatted = roster.map(r => ({
+        guard_id: r.guard_id || null,
+        location_id: r.location_id,
+        shift: r.shift,
+        status: r.status || 'Assigned'
+      }));
+
+      const res = await api.post('/api/roster/save', {
+        date: activeDate,
+        assignments: formatted
+      });
+
+      if (res.data.success) {
+        alert('Daily duty roster saved successfully.');
+        loadData(activeDate);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to save assignments.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Cell Lock/Unlock override
+  const handleToggleLock = (locationId: number, shift: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cellIndex = roster.findIndex(r => r.location_id === locationId && r.shift === shift);
+    if (cellIndex !== -1) {
+      const copy = [...roster];
+      const cell = copy[cellIndex];
+      if (cell.guard_id) {
+        cell.status = cell.status === 'Locked' ? 'Assigned' : 'Locked';
+        setRoster(copy);
+      }
+    }
+  };
+
+  // Open override picker modal
+  const handleOpenOverride = async (locationId: number, shift: string) => {
+    const loc = locations.find(l => l.id === locationId);
+    setOverrideLoc(loc);
+    setOverrideShift(shift);
+
+    const cell = roster.find(r => r.location_id === locationId && r.shift === shift);
+    setOverrideGuardId(cell?.guard_id ? String(cell.guard_id) : '');
+
+    try {
+      const res = await api.get(`/api/roster/suggestions?date=${activeDate}&locationId=${locationId}&shift=${shift}`);
+      if (res.data.success) {
+        setCandidates(res.data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setShowOverride(true);
+  };
+
+  const handleApplyOverride = () => {
+    if (!overrideLoc) return;
+
+    const cellIndex = roster.findIndex(r => r.location_id === overrideLoc.id && r.shift === overrideShift);
+    if (cellIndex !== -1) {
+      const copy = [...roster];
+      const selectedId = Number(overrideGuardId);
+      const guard = guards.find(g => g.id === selectedId);
+
+      if (guard) {
+        copy[cellIndex] = {
+          ...copy[cellIndex],
+          guard_id: guard.id,
+          guard_name: guard.name,
+          guard_code: guard.guardCode,
+          status: 'Assigned'
+        };
+      } else {
+        copy[cellIndex] = {
+          ...copy[cellIndex],
+          guard_id: null,
+          guard_name: null,
+          guard_code: null,
+          status: 'Vacant'
+        };
+      }
+      setRoster(copy);
+    }
+    setShowOverride(false);
+  };
+
+  const handleClearOverride = () => {
+    if (!overrideLoc) return;
+    const cellIndex = roster.findIndex(r => r.location_id === overrideLoc.id && r.shift === overrideShift);
+    if (cellIndex !== -1) {
+      const copy = [...roster];
+      copy[cellIndex] = {
+        ...copy[cellIndex],
+        guard_id: null,
+        guard_name: null,
+        guard_code: null,
+        status: 'Vacant'
+      };
+      setRoster(copy);
+    }
+    setShowOverride(false);
+  };
+
+  // Drag and Drop implementation
+  const handleDragStart = (e: React.DragEvent, locationId: number, shift: string) => {
+    setDraggedCell({ locationId, shift });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetLocId: number, targetShift: string) => {
+    e.preventDefault();
+    if (!draggedCell) return;
+
+    const sourceLocId = draggedCell.locationId;
+    const sourceShift = draggedCell.shift;
+
+    if (sourceLocId === targetLocId && sourceShift === targetShift) return;
+
+    const sourceIndex = roster.findIndex(r => r.location_id === sourceLocId && r.shift === sourceShift);
+    const targetIndex = roster.findIndex(r => r.location_id === targetLocId && r.shift === targetShift);
+
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+      const copy = [...roster];
+      
+      // Perform swap of guard properties
+      const tempId = copy[sourceIndex].guard_id;
+      const tempName = copy[sourceIndex].guard_name;
+      const tempCode = copy[sourceIndex].guard_code;
+      const tempStatus = copy[sourceIndex].status === 'Locked' ? 'Assigned' : copy[sourceIndex].status;
+
+      copy[sourceIndex].guard_id = copy[targetIndex].guard_id;
+      copy[sourceIndex].guard_name = copy[targetIndex].guard_name;
+      copy[sourceIndex].guard_code = copy[targetIndex].guard_code;
+      copy[sourceIndex].status = copy[targetIndex].status === 'Locked' ? 'Assigned' : copy[targetIndex].status;
+
+      copy[targetIndex].guard_id = tempId;
+      copy[targetIndex].guard_name = tempName;
+      copy[targetIndex].guard_code = tempCode;
+      copy[targetIndex].status = tempStatus;
+
+      setRoster(copy);
+    }
+    setDraggedCell(null);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Checkpoint Point', 'Morning Shift', 'Evening Shift', 'Night Shift', 'Reserve'];
+    const rows = locations.map(loc => {
+      const line = [translateText(loc.locationName)];
+      ['Morning', 'Evening', 'Night', 'Reserve'].forEach(s => {
+        const match = roster.find(r => r.location_id === loc.id && r.shift === s);
+        line.push(match?.guard_name ? `${translateText(match.guard_name)} (${match.guard_code})` : 'Vacant');
+      });
+      return line;
+    });
+    exportToCSV(`duty_roster_${activeDate}.csv`, headers, rows);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t('rosterMgmt')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('rosterMgmtSub')}</p>
+        </div>
+
+        <div className="flex items-center gap-2 no-print flex-wrap">
+          <input 
+            type="date" 
+            value={activeDate}
+            onChange={handleDateChange}
+            className="px-3 py-2 text-sm rounded-lg border border-border bg-card"
+          />
+          <button 
+            onClick={handleAutoAllocate}
+            disabled={generating}
+            className="px-3 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-105 disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+          >
+            <RefreshCw className={`h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+            <span>{generating ? 'Calculating...' : t('autoAllocate')}</span>
+          </button>
+          <button 
+            onClick={handleSaveRoster}
+            disabled={saving}
+            className="px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm"
+          >
+            <Save className="h-4 w-4" />
+            <span>{saving ? 'Saving...' : t('save')}</span>
+          </button>
+          <button 
+            onClick={handlePrint}
+            className="p-2 text-sm rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
+          >
+            <Printer className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={handleExportCSV}
+            className="px-3 py-2 text-xs font-semibold rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
+          >
+            Export Excel
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-10 text-sm text-muted-foreground">Loading duty grid...</div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-4">
+          {/* TIMETABLE ROSTER GRID */}
+          <div className="lg:col-span-3 overflow-x-auto">
+            <table className="roster-table text-xs">
+              <thead>
+                <tr>
+                  <th className="w-1/5">{t('locationNode')}</th>
+                  <th>{t('morningShift')}</th>
+                  <th>{t('eveningShift')}</th>
+                  <th>{t('nightShift')}</th>
+                  <th>{t('reserveGuard')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locations.map(loc => {
+                  const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+                  return (
+                    <tr key={loc.id}>
+                      <td className="font-bold text-foreground bg-muted/5">{translateText(loc.locationName)}</td>
+                      {['Morning', 'Evening', 'Night', 'Reserve'].map(s => {
+                        const cell = roster.find(r => r.location_id === loc.id && r.shift === s);
+                        const isActive = activeShifts.includes(s) || s === 'Reserve';
+                        
+                        if (!isActive) {
+                          return <td key={s} className="bg-muted/10 text-muted-foreground/30 text-center">-</td>;
+                        }
+
+                        const isLocked = cell?.status === 'Locked';
+                        const guardName = cell?.guard_name ? translateText(cell.guard_name) : '';
+                        const hasGuard = !!cell?.guard_id;
+
+                        let tdClass = 'status-vacant';
+                        if (hasGuard) {
+                          tdClass = isLocked ? 'status-locked font-semibold' : 'status-assigned cursor-grab active:cursor-grabbing';
+                        }
+
+                        return (
+                          <td 
+                            key={s}
+                            className={`p-3 text-center transition-all ${tdClass}`}
+                            onClick={() => handleOpenOverride(loc.id, s)}
+                            draggable={hasGuard && !isLocked}
+                            onDragStart={(e) => handleDragStart(e, loc.id, s)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, loc.id, s)}
+                          >
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="flex-1 text-center font-medium">
+                                {hasGuard ? `${guardName} (${cell.guard_code})` : 'Vacant'}
+                              </span>
+                              {hasGuard && (
+                                <button 
+                                  onClick={(e) => handleToggleLock(loc.id, s, e)}
+                                  className="text-muted-foreground hover:text-foreground no-print"
+                                >
+                                  {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* SIDEBAR SIDE CARDS */}
+          <div className="space-y-4 no-print">
+            {/* Conflict detections */}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+              <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">⚠️ {t('conflictDetect')}</h4>
+              <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                {conflicts.length === 0 ? (
+                  <p className="text-xs text-emerald-600 font-medium bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    {t('allClear')}
+                  </p>
+                ) : (
+                  conflicts.map((c, i) => (
+                    <div key={i} className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-600 font-medium">
+                      {c.message}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Shortages */}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+              <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">🚨 Shortages / Vacancies</h4>
+              <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                {shortages.length === 0 ? (
+                  <p className="text-xs text-emerald-600 font-medium bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    {t('allStaffed')}
+                  </p>
+                ) : (
+                  shortages.map((s, i) => (
+                    <div key={i} className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] text-red-500 flex justify-between items-center">
+                      <span><strong>{translateText(s.locationName)}</strong> - {s.shift}</span>
+                      <button 
+                        onClick={() => handleOpenOverride(s.locationId, s.shift)}
+                        className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold text-[8px]"
+                      >
+                        Solve
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OVERRIDE MODAL DIALOG */}
+      {showOverride && overrideLoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div>
+              <h3 className="font-bold text-md text-foreground">Manual Override</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Checkpoint: {translateText(overrideLoc.locationName)} ({overrideShift})
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-muted-foreground">Select Replacement Candidate</label>
+              <select 
+                value={overrideGuardId}
+                onChange={(e) => setOverrideGuardId(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
+              >
+                <option value="">-- Vacant / Unassigned --</option>
+                {candidates.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.guardCode}) - Exp: {c.experience}y
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2 text-xs">
+              <button 
+                onClick={() => setShowOverride(false)}
+                className="px-3 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              {overrideGuardId && (
+                <button 
+                  onClick={handleClearOverride}
+                  className="px-3 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 flex items-center gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
+              <button 
+                onClick={handleApplyOverride}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

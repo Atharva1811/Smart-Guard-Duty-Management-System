@@ -1,0 +1,196 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  VIEWER
+}
+
+enum GuardStatus {
+  AVAILABLE
+  LEAVE
+  ABSENT
+  TRAINING
+  MEDICAL
+  HOLIDAY
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
+  passwordHash String
+  name         String
+  role         Role          @default(VIEWER)
+  email        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessions     UserSession[]
+  auditLogs    AuditLog[]
+
+  @@index([username])
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+model Guard {
+  id              Int                 @id @default(autoincrement())
+  guardCode       String              @unique
+  name            String
+  phone           String?
+  email           String?
+  age             Int?
+  experience      Int?
+  gender          String?
+  shiftPreference String              @default("Any") // "Morning", "Evening", "Night", "Any"
+  weeklyOff       Int                 @default(0) // 0 (Sunday) to 6 (Saturday)
+  status          GuardStatus         @default(AVAILABLE)
+  availability    Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  attendance      Attendance[]
+  leaves          LeaveRequest[]
+  assignments     DutyAssignment[]
+  history         AssignmentHistory[]
+
+  @@index([guardCode])
+  @@index([status])
+}
+
+model Location {
+  id             Int                 @id @default(autoincrement())
+  locationName   String
+  requiredGuards Int                 @default(1)
+  priority       Int                 @default(2) // 1 = Critical, 2 = Standard, 3 = Low
+  securityLevel  String              @default("Standard")
+  shift          String              @default("Morning,Evening,Night") // Comma separated shifts
+  status         String              @default("Active")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  assignments    DutyAssignment[]
+  history        AssignmentHistory[]
+
+  @@index([status])
+}
+
+model Attendance {
+  id             Int         @id @default(autoincrement())
+  guardId        Int
+  guard          Guard       @relation(fields: [guardId], references: [id], onDelete: Cascade)
+  status         GuardStatus @default(AVAILABLE)
+  attendanceDate String      // YYYY-MM-DD
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([guardId, attendanceDate])
+  @@index([attendanceDate])
+  @@index([guardId])
+}
+
+model LeaveRequest {
+  id        Int         @id @default(autoincrement())
+  guardId   Int
+  guard     Guard       @relation(fields: [guardId], references: [id], onDelete: Cascade)
+  leaveDate String      // YYYY-MM-DD
+  reason    String?
+  status    LeaveStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([guardId])
+  @@index([leaveDate])
+  @@index([status])
+}
+
+model DutyAssignment {
+  id             Int      @id @default(autoincrement())
+  guardId        Int?
+  guard          Guard?   @relation(fields: [guardId], references: [id], onDelete: SetNull)
+  locationId     Int
+  location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  shift          String   // "Morning", "Evening", "Night", "Reserve"
+  assignmentDate String   // YYYY-MM-DD
+  status         String   @default("Assigned") // "Assigned", "Locked", "Vacant"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([locationId, shift, assignmentDate])
+  @@index([assignmentDate])
+  @@index([guardId])
+  @@index([locationId])
+}
+
+model AssignmentHistory {
+  id             Int      @id @default(autoincrement())
+  guardId        Int?
+  guard          Guard?   @relation(fields: [guardId], references: [id], onDelete: SetNull)
+  locationId     Int
+  location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  shift          String
+  assignmentDate String
+  remarks        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([assignmentDate])
+  @@index([guardId])
+  @@index([locationId])
+}
+
+model HolidayCalendar {
+  id          Int      @id @default(autoincrement())
+  holidayDate String   @unique // YYYY-MM-DD
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([holidayDate])
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   // JSON stringified configuration values
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   String
+  ipAddress String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}

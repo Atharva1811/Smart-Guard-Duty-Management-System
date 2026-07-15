@@ -1,25 +1,21 @@
 {
-  "name": "smart-guard-duty-system",
+  "name": "guard-management-system",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
-    "setup": "node scripts/setup.js",
-    "dev": "wrangler pages dev .",
-    "dev:api": "wrangler dev worker/index.js --port 8787",
-    "deploy": "wrangler deploy worker/index.js --name smart-guard-duty-system-api && wrangler pages deploy . --project-name=smart-guard-duty-system",
-    "worker": "wrangler deploy worker/index.js --name smart-guard-duty-system-api",
-    "pages": "wrangler pages deploy . --project-name=smart-guard-duty-system",
-    "build": "echo 'No build required for Vanilla HTML/CSS/JS!'",
-    "lint": "eslint ."
+    "dev": "concurrently \"npm run dev --workspace=client\" \"npm run dev --workspace=server\"",
+    "build": "npm run build --workspace=client && npm run build --workspace=server",
+    "start": "npm run start --workspace=server",
+    "migrate": "npm run migrate --workspace=server",
+    "seed": "npm run seed --workspace=server",
+    "prisma:generate": "npm run prisma:generate --workspace=server",
+    "lint": "npm run lint --workspace=client && npm run lint --workspace=server"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
-    "prettier": "^3.0.0",
-    "wrangler": "^3.60.0"
-  },
-  "dependencies": {
-    "jspdf": "^2.5.1",
-    "xlsx": "^0.18.5"
+    "concurrently": "^8.2.2"
   }
 }
