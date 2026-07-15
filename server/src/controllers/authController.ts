@@ -40,9 +40,10 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { username, password } = req.body;
-    console.log(`[LOGIN TRY] Received login request for username: "${username}"`);
+    const sanitizedUsername = username ? String(username).trim().toLowerCase() : '';
+    console.log(`[LOGIN TRY] Received login request for username: "${sanitizedUsername}"`);
 
-    const user = await prisma.user.findUnique({ where: { username } });
+    const user = await prisma.user.findUnique({ where: { username: sanitizedUsername } });
     if (!user) {
       console.log(`[LOGIN FAIL] User not found: "${username}"`);
       return sendError(res, 'Invalid credentials username or password.', 401, 'Unauthorized');
