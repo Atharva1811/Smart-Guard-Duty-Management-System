@@ -151,6 +151,35 @@ export const generateRosterSchedule = async (
     }
   });
 
+  // 3b. Permanent Assignment mapping
+  availableGuards.forEach(g => {
+    if (assignedGuardIds.has(g.id)) return;
+
+    if (g.permanentLocationId && g.permanentShift) {
+      const locId = g.permanentLocationId;
+      const shift = g.permanentShift;
+
+      const loc = locations.find(l => l.id === locId);
+      if (loc) {
+        const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+        const isValidShift = activeShifts.includes(shift) || shift === 'Reserve';
+
+        if (isValidShift) {
+          const currentCell = roster[locId][shift];
+          if (!currentCell || !currentCell.locked) {
+            roster[locId][shift] = {
+              guard_id: g.id,
+              guard_name: g.name,
+              guard_code: g.guardCode,
+              locked: true // Permanent assignments are locked
+            };
+            assignedGuardIds.add(g.id);
+          }
+        }
+      }
+    }
+  });
+
   // 4. Sticky assignment logic: Appoint yesterday's guard to the same spot/shift today (consecutive 6-day cycle)
   const yesterdayObj = new Date(dateObj.getTime() - 86400000);
   const yesterdayStr = yesterdayObj.toISOString().split('T')[0];

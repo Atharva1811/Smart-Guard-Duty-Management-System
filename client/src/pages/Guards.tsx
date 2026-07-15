@@ -19,6 +19,7 @@ export const Guards: React.FC = () => {
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
   const [selectedGuard, setSelectedGuard] = useState<any | null>(null);
   const [bulkNames, setBulkNames] = useState<string>('');
+  const [locations, setLocations] = useState<any[]>([]);
 
   const { register, handleSubmit, reset, setValue } = useForm({
     defaultValues: {
@@ -27,6 +28,8 @@ export const Guards: React.FC = () => {
       phone: '',
       email: '',
       gender: 'Male',
+      permanentLocationId: '',
+      permanentShift: '',
       weeklyOff: 0,
       status: 'AVAILABLE',
     }
@@ -46,8 +49,20 @@ export const Guards: React.FC = () => {
     }
   };
 
+  const loadLocations = async () => {
+    try {
+      const res = await api.get('/api/locations');
+      if (res.data.success) {
+        setLocations(res.data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     loadGuards();
+    loadLocations();
   }, []);
 
   const openAddModal = () => {
@@ -64,6 +79,8 @@ export const Guards: React.FC = () => {
       phone: '',
       email: '',
       gender: 'Male',
+      permanentLocationId: '',
+      permanentShift: '',
       weeklyOff: 0,
       status: 'AVAILABLE',
     });
@@ -78,6 +95,8 @@ export const Guards: React.FC = () => {
       phone: guard.phone || '',
       email: guard.email || '',
       gender: guard.gender || 'Male',
+      permanentLocationId: guard.permanentLocationId ? String(guard.permanentLocationId) : '',
+      permanentShift: guard.permanentShift || '',
       weeklyOff: guard.weeklyOff,
       status: guard.status,
     });
@@ -85,13 +104,19 @@ export const Guards: React.FC = () => {
   };
 
   const onSubmit = async (data: any) => {
+    const formatted = {
+      ...data,
+      permanentLocationId: data.permanentLocationId ? Number(data.permanentLocationId) : null,
+      permanentShift: data.permanentShift || null,
+    };
+
     try {
       if (selectedGuard) {
         // Edit update
-        await api.put(`/api/guards/${selectedGuard.id}`, data);
+        await api.put(`/api/guards/${selectedGuard.id}`, formatted);
       } else {
         // Add create
-        await api.post('/api/guards', data);
+        await api.post('/api/guards', formatted);
       }
       setShowModal(false);
       loadGuards();
@@ -239,6 +264,17 @@ export const Guards: React.FC = () => {
                   </div>
                   <div className="text-xs space-y-1 text-muted-foreground">
                     <div><strong>Weekly Off:</strong> {getDayName(g.weeklyOff)}</div>
+                    {(() => {
+                      const loc = locations.find(l => l.id === g.permanentLocationId);
+                      if (loc && g.permanentShift) {
+                        return (
+                          <div className="text-[10px] text-amber-500 font-semibold flex items-center gap-1 mt-1 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 w-fit">
+                            <span>Locked: {translateText(loc.locationName)} ({g.permanentShift})</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
 
@@ -332,6 +368,35 @@ export const Guards: React.FC = () => {
                   <option value="TRAINING">Training</option>
                   <option value="MEDICAL">Medical</option>
                 </select>
+              </div>
+
+              {/* Permanent lock settings */}
+              <div className="grid grid-cols-2 gap-3 border-t border-border pt-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Permanent Checkpoint</label>
+                  <select 
+                    {...register('permanentLocationId')}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
+                  >
+                    <option value="">-- None --</option>
+                    {locations.map(l => (
+                      <option key={l.id} value={l.id}>{translateText(l.locationName)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Permanent Shift</label>
+                  <select 
+                    {...register('permanentShift')}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
+                  >
+                    <option value="">-- None --</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                    <option value="Reserve">Reserve</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end pt-2 text-xs">

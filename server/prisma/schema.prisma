@@ -63,6 +63,8 @@ model Guard {
   phone           String?
   email           String?
   gender          String?
+  permanentLocationId Int?
+  permanentShift      String?
   weeklyOff       Int                 @default(0) // 0 (Sunday) to 6 (Saturday)
   status          GuardStatus         @default(AVAILABLE)
   availability    Boolean             @default(true)
