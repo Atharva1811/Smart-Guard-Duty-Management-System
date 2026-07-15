@@ -242,6 +242,24 @@ export const TodayDuty: React.FC = () => {
     }
   };
 
+  const handleClearRoster = () => {
+    if (confirm('Are you sure you want to clear all unassigned/assigned duties? Locked duties will remain intact.')) {
+      const copy = roster.map(cell => {
+        if (cell.status === 'Locked') {
+          return cell;
+        }
+        return {
+          ...cell,
+          guard_id: null,
+          guard_name: null,
+          guard_code: null,
+          status: 'Vacant'
+        };
+      });
+      setRoster(copy);
+    }
+  };
+
   // Open override picker modal
   const handleOpenOverride = async (locationId: number, shift: string) => {
     const loc = locations.find(l => l.id === locationId);
@@ -404,6 +422,13 @@ export const TodayDuty: React.FC = () => {
             <span>{saving ? 'Saving...' : t('save')}</span>
           </button>
           <button 
+            onClick={handleClearRoster}
+            className="px-3 py-2 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-1.5 shadow-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Clear All</span>
+          </button>
+          <button 
             onClick={handlePrint}
             className="p-2 text-sm rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
           >
@@ -558,7 +583,7 @@ export const TodayDuty: React.FC = () => {
                 <option value="">-- Vacant / Unassigned --</option>
                 {candidates.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.guardCode}) - Exp: {c.experience}y
+                    {c.name} ({c.guardCode})
                   </option>
                 ))}
               </select>

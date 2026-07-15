@@ -62,10 +62,7 @@ model Guard {
   name            String
   phone           String?
   email           String?
-  age             Int?
-  experience      Int?
   gender          String?
-  shiftPreference String              @default("Any") // "Morning", "Evening", "Night", "Any"
   weeklyOff       Int                 @default(0) // 0 (Sunday) to 6 (Saturday)
   status          GuardStatus         @default(AVAILABLE)
   availability    Boolean             @default(true)

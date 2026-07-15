@@ -30,7 +30,7 @@ export const getGuardById = async (req: Request, res: Response, next: NextFuncti
 
 export const createGuard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { guardCode, name, phone, email, age, experience, gender, shiftPreference, weeklyOff, status } = req.body;
+    const { guardCode, name, phone, email, gender, weeklyOff, status } = req.body;
 
     const existing = await prisma.guard.findUnique({ where: { guardCode } });
     if (existing) {
@@ -43,10 +43,7 @@ export const createGuard = async (req: Request, res: Response, next: NextFunctio
         name,
         phone,
         email,
-        age,
-        experience,
         gender,
-        shiftPreference,
         weeklyOff,
         status: status as GuardStatus,
       },
@@ -61,7 +58,7 @@ export const createGuard = async (req: Request, res: Response, next: NextFunctio
 export const updateGuard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = Number(req.params.id);
-    const { guardCode, name, phone, email, age, experience, gender, shiftPreference, weeklyOff, status } = req.body;
+    const { guardCode, name, phone, email, gender, weeklyOff, status } = req.body;
 
     const guard = await prisma.guard.update({
       where: { id },
@@ -70,10 +67,7 @@ export const updateGuard = async (req: Request, res: Response, next: NextFunctio
         name,
         phone,
         email,
-        age,
-        experience,
         gender,
-        shiftPreference,
         weeklyOff,
         status: status as GuardStatus,
       },

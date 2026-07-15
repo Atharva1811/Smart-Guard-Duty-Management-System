@@ -19,10 +19,7 @@ export const guardSchema = z.object({
   name: z.string().min(2),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
-  age: z.number().int().min(18).max(70).optional(),
-  experience: z.number().int().min(0).max(50).optional(),
   gender: z.string().optional(),
-  shiftPreference: z.enum(['Morning', 'Evening', 'Night', 'Any']).default('Any'),
   weeklyOff: z.number().int().min(0).max(6).default(0),
   status: z.enum(['AVAILABLE', 'LEAVE', 'ABSENT', 'TRAINING', 'MEDICAL', 'HOLIDAY']).default('AVAILABLE'),
 });

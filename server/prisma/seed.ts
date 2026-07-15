@@ -48,21 +48,21 @@ async function main() {
 
   // 3. Create Guards
   const guardsData = [
-    { guardCode: 'G001', name: 'Ramesh Shinde', age: 34, experience: 8, gender: 'Male', shiftPreference: 'Morning', weeklyOff: 0 },
-    { guardCode: 'G002', name: 'Sanjay Patil', age: 41, experience: 12, gender: 'Male', shiftPreference: 'Night', weeklyOff: 1 },
-    { guardCode: 'G003', name: 'Aniket Kadam', age: 28, experience: 3, gender: 'Male', shiftPreference: 'Evening', weeklyOff: 2 },
-    { guardCode: 'G004', name: 'Sunil Pawar', age: 45, experience: 15, gender: 'Male', shiftPreference: 'Any', weeklyOff: 3 },
-    { guardCode: 'G005', name: 'Pooja Sawant', age: 29, experience: 4, gender: 'Female', shiftPreference: 'Morning', weeklyOff: 0 },
-    { guardCode: 'G006', name: 'Vijay Rane', age: 37, experience: 9, gender: 'Male', shiftPreference: 'Night', weeklyOff: 4 },
-    { guardCode: 'G007', name: 'Rahul More', age: 31, experience: 6, gender: 'Male', shiftPreference: 'Evening', weeklyOff: 5 },
-    { guardCode: 'G008', name: 'Snehal Jadhav', age: 26, experience: 2, gender: 'Female', shiftPreference: 'Morning', weeklyOff: 0 },
-    { guardCode: 'G009', name: 'Amol Deshmukh', age: 39, experience: 11, gender: 'Male', shiftPreference: 'Any', weeklyOff: 6 },
-    { guardCode: 'G010', name: 'Ganesh Joshi', age: 35, experience: 7, gender: 'Male', shiftPreference: 'Night', weeklyOff: 1 },
-    { guardCode: 'G011', name: 'Dipak Koli', age: 33, experience: 5, gender: 'Male', shiftPreference: 'Evening', weeklyOff: 2 },
-    { guardCode: 'G012', name: 'Sandip Patil', age: 42, experience: 13, gender: 'Male', shiftPreference: 'Any', weeklyOff: 3 },
-    { guardCode: 'G013', name: 'Priyanka Shinde', age: 27, experience: 3, gender: 'Female', shiftPreference: 'Morning', weeklyOff: 0 },
-    { guardCode: 'G014', name: 'Prasad Rane', age: 38, experience: 10, gender: 'Male', shiftPreference: 'Night', weeklyOff: 4 },
-    { guardCode: 'G015', name: 'Nitin Kadam', age: 30, experience: 4, gender: 'Male', shiftPreference: 'Evening', weeklyOff: 5 },
+    { guardCode: 'G001', name: 'Ramesh Shinde', gender: 'Male', weeklyOff: 0 },
+    { guardCode: 'G002', name: 'Sanjay Patil', gender: 'Male', weeklyOff: 1 },
+    { guardCode: 'G003', name: 'Aniket Kadam', gender: 'Male', weeklyOff: 2 },
+    { guardCode: 'G004', name: 'Sunil Pawar', gender: 'Male', weeklyOff: 3 },
+    { guardCode: 'G005', name: 'Pooja Sawant', gender: 'Female', weeklyOff: 0 },
+    { guardCode: 'G006', name: 'Vijay Rane', gender: 'Male', weeklyOff: 4 },
+    { guardCode: 'G007', name: 'Rahul More', gender: 'Male', weeklyOff: 5 },
+    { guardCode: 'G008', name: 'Snehal Jadhav', gender: 'Female', weeklyOff: 0 },
+    { guardCode: 'G009', name: 'Amol Deshmukh', gender: 'Male', weeklyOff: 6 },
+    { guardCode: 'G010', name: 'Ganesh Joshi', gender: 'Male', weeklyOff: 1 },
+    { guardCode: 'G011', name: 'Dipak Koli', gender: 'Male', weeklyOff: 2 },
+    { guardCode: 'G012', name: 'Sandip Patil', gender: 'Male', weeklyOff: 3 },
+    { guardCode: 'G013', name: 'Priyanka Shinde', gender: 'Female', weeklyOff: 0 },
+    { guardCode: 'G014', name: 'Prasad Rane', gender: 'Male', weeklyOff: 4 },
+    { guardCode: 'G015', name: 'Nitin Kadam', gender: 'Male', weeklyOff: 5 },
   ];
 
   const guards = [];

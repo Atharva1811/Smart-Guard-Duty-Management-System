@@ -204,20 +204,12 @@ export const generateRosterSchedule = async (
       const scoredCandidates: ScoredCandidate[] = candidates.map(g => {
         let score = 0;
 
-        // Shift preference matching
-        if (g.shiftPreference === shift || g.shiftPreference === 'Any') {
-          score += 30;
-        }
-
         // Workload balance penalty (lower workload gives higher score)
         score -= (workloadMap[g.id] || 0) * 5;
 
         // Location repetition penalty
         const repCount = lastLocationMap[g.id][loc.id] || 0;
         score -= repCount * 15;
-
-        // Experience bonus
-        score += Math.min(g.experience || 0, 10);
 
         return { guard: g, score };
       });

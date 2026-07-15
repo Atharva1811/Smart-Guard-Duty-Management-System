@@ -13,7 +13,6 @@ export const Guards: React.FC = () => {
   // Search & Filter
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [shiftFilter, setShiftFilter] = useState<string>('All');
 
   // Modal control
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -27,10 +26,7 @@ export const Guards: React.FC = () => {
       name: '',
       phone: '',
       email: '',
-      age: 30,
-      experience: 2,
       gender: 'Male',
-      shiftPreference: 'Any',
       weeklyOff: 0,
       status: 'AVAILABLE',
     }
@@ -61,10 +57,7 @@ export const Guards: React.FC = () => {
       name: '',
       phone: '',
       email: '',
-      age: 30,
-      experience: 2,
       gender: 'Male',
-      shiftPreference: 'Any',
       weeklyOff: 0,
       status: 'AVAILABLE',
     });
@@ -78,10 +71,7 @@ export const Guards: React.FC = () => {
       name: guard.name,
       phone: guard.phone || '',
       email: guard.email || '',
-      age: guard.age || 30,
-      experience: guard.experience || 2,
       gender: guard.gender || 'Male',
-      shiftPreference: guard.shiftPreference,
       weeklyOff: guard.weeklyOff,
       status: guard.status,
     });
@@ -131,9 +121,7 @@ export const Guards: React.FC = () => {
         await api.post('/api/guards', {
           guardCode: code,
           name,
-          experience: 2,
           gender: 'Male',
-          shiftPreference: 'Any',
           weeklyOff: 0,
           status: 'AVAILABLE',
         });
@@ -152,8 +140,7 @@ export const Guards: React.FC = () => {
     const query = search.toLowerCase();
     const matchSearch = g.name.toLowerCase().includes(query) || g.guardCode.toLowerCase().includes(query);
     const matchStatus = statusFilter === 'All' || g.status === statusFilter;
-    const matchShift = shiftFilter === 'All' || g.shiftPreference === shiftFilter;
-    return matchSearch && matchStatus && matchShift;
+    return matchSearch && matchStatus;
   });
 
   const getDayName = (dayIndex: number) => {
@@ -187,8 +174,7 @@ export const Guards: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter and Search controls */}
-      <div className="grid gap-4 sm:grid-cols-3 bg-card p-4 rounded-xl border border-border">
+      <div className="grid gap-4 sm:grid-cols-2 bg-card p-4 rounded-xl border border-border">
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <input 
@@ -210,17 +196,6 @@ export const Guards: React.FC = () => {
           <option value="ABSENT">Absent</option>
           <option value="TRAINING">Training</option>
           <option value="MEDICAL">Medical</option>
-        </select>
-        <select 
-          value={shiftFilter}
-          onChange={(e) => setShiftFilter(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border border-border bg-muted/20"
-        >
-          <option value="All">All Shift Preferences</option>
-          <option value="Morning">Morning Preference</option>
-          <option value="Evening">Evening Preference</option>
-          <option value="Night">Night Preference</option>
-          <option value="Any">Any Preference</option>
         </select>
       </div>
 
@@ -254,9 +229,7 @@ export const Guards: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-xs space-y-1 text-muted-foreground">
-                    <div><strong>Preference:</strong> {g.shiftPreference}</div>
                     <div><strong>Weekly Off:</strong> {getDayName(g.weeklyOff)}</div>
-                    <div><strong>Experience:</strong> {g.experience} Years</div>
                   </div>
                 </div>
 
@@ -312,34 +285,13 @@ export const Guards: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Age</label>
-                  <input 
-                    type="number" 
-                    {...register('age', { valueAsNumber: true })}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Experience (Years)</label>
-                  <input 
-                    type="number" 
-                    {...register('experience', { valueAsNumber: true })}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Shift Preference</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Gender</label>
                   <select 
-                    {...register('shiftPreference')}
+                    {...register('gender')}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
                   >
-                    <option value="Any">Any shift</option>
-                    <option value="Morning">Morning</option>
-                    <option value="Evening">Evening</option>
-                    <option value="Night">Night</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
                   </select>
                 </div>
                 <div>
