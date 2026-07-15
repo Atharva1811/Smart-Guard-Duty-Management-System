@@ -380,6 +380,10 @@ export const TodayDuty: React.FC = () => {
       const guard = guards.find(g => g.id === selectedId);
 
       if (guard) {
+        // Find if this guard was previously assigned to another cell today (excluding target cell)
+        const prevCellIndex = copy.findIndex(r => r.guard_id === selectedId && !(r.location_id === overrideLoc.id && r.shift === overrideShift));
+
+        // Assign guard to target cell
         copy[cellIndex] = {
           ...copy[cellIndex],
           guard_id: guard.id,
@@ -387,6 +391,38 @@ export const TodayDuty: React.FC = () => {
           guard_code: guard.guardCode,
           status: 'Assigned'
         };
+
+        if (prevCellIndex !== -1) {
+          // Old cell is temporarily vacant
+          copy[prevCellIndex] = {
+            ...copy[prevCellIndex],
+            guard_id: null,
+            guard_name: null,
+            guard_code: null,
+            status: 'Vacant'
+          };
+
+          // Find occupied guard IDs to get a pool of free guards
+          const occupiedIds = new Set<number>();
+          copy.forEach(r => {
+            if (r.guard_id) occupiedIds.add(r.guard_id);
+          });
+
+          // Filter candidates to get free guards
+          const freeCandidates = candidates.filter(c => !occupiedIds.has(c.id));
+
+          if (freeCandidates.length > 0) {
+            const replacement = freeCandidates[0];
+            copy[prevCellIndex] = {
+              ...copy[prevCellIndex],
+              guard_id: replacement.id,
+              guard_name: replacement.name,
+              guard_code: replacement.guardCode,
+              status: 'Assigned'
+            };
+            alert(`Auto-staffed: ${replacement.name} has been assigned to ${translateText(copy[prevCellIndex].location_name)} (${copy[prevCellIndex].shift}) to replace ${guard.name}.`);
+          }
+        }
       } else {
         copy[cellIndex] = {
           ...copy[cellIndex],
@@ -724,14 +760,15 @@ export const TodayDuty: React.FC = () => {
               >
                 <option value="">-- Vacant / Unassigned --</option>
                 {(() => {
-                  const activeGuardIds = roster
+                  const lockedGuardIds = roster
                     .filter(r => !(overrideLoc && r.location_id === overrideLoc.id && r.shift === overrideShift))
+                    .filter(r => r.status === 'Locked')
                     .map(r => r.guard_id)
                     .filter(id => id !== null && id !== undefined);
                   
                   const query = candidateSearch.toLowerCase();
                   const filteredCandidates = candidates
-                    .filter(c => !activeGuardIds.includes(c.id))
+                    .filter(c => !lockedGuardIds.includes(c.id))
                     .filter(c => c.name.toLowerCase().includes(query) || c.guardCode.toLowerCase().includes(query));
 
                   return filteredCandidates.map(c => (
