@@ -375,20 +375,9 @@ export const getReplacementCandidates = async (
     where: { leaveDate: dateStr, status: LeaveStatus.APPROVED }
   });
 
-  // Check current allocations for this date to exclude active guards
-  const activeAssignments = await prisma.dutyAssignment.findMany({
-    where: { assignmentDate: dateStr }
-  });
-
-  const assignedGuardIds = new Set(
-    activeAssignments.map(a => a.guardId).filter(id => id !== null) as number[]
-  );
-
   const dayOfWeek = new Date(dateStr).getDay();
 
   return guards.filter(guard => {
-    if (assignedGuardIds.has(guard.id)) return false;
-
     // Filter approved leaves
     const hasLeave = leaves.some(l => l.guardId === guard.id);
     if (hasLeave) return false;

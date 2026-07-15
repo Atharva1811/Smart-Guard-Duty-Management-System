@@ -630,11 +630,18 @@ export const TodayDuty: React.FC = () => {
                 className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
               >
                 <option value="">-- Vacant / Unassigned --</option>
-                {candidates.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.guardCode})
-                  </option>
-                ))}
+                {(() => {
+                  const activeGuardIds = roster
+                    .filter(r => !(overrideLoc && r.location_id === overrideLoc.id && r.shift === overrideShift))
+                    .map(r => r.guard_id)
+                    .filter(id => id !== null && id !== undefined);
+                  const availableCandidates = candidates.filter(c => !activeGuardIds.includes(c.id));
+                  return availableCandidates.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.guardCode})
+                    </option>
+                  ));
+                })()}
               </select>
             </div>
 
