@@ -13,7 +13,8 @@ import {
   AlertCircle, 
   UserCheck, 
   UserMinus,
-  AlertTriangle
+  AlertTriangle,
+  Search
 } from 'lucide-react';
 
 export const TodayDuty: React.FC = () => {
@@ -40,6 +41,7 @@ export const TodayDuty: React.FC = () => {
   const [overrideGuardId, setOverrideGuardId] = useState<string>('');
   const [candidates, setCandidates] = useState<any[]>([]);
   const [candidateSearch, setCandidateSearch] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Drag and drop local state cache
   const [draggedCell, setDraggedCell] = useState<{ locationId: number; shift: string } | null>(null);
@@ -531,6 +533,20 @@ export const TodayDuty: React.FC = () => {
         </div>
       </div>
 
+      {/* Search and Filters Bar */}
+      <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-2 no-print">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search by checkpoint location name or assigned guard name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary focus:text-white"
+          />
+        </div>
+      </div>
+
       {loading ? (
         <div className="text-center py-10 text-sm text-muted-foreground">Loading duty grid...</div>
       ) : (
@@ -548,7 +564,18 @@ export const TodayDuty: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {locations.map(loc => {
+                {(() => {
+                  const filteredLocations = locations.filter(loc => {
+                    const query = searchQuery.toLowerCase();
+                    const matchLoc = loc.locationName.toLowerCase().includes(query);
+                    const matchGuard = roster.some(r => 
+                      r.location_id === loc.id && 
+                      r.guard_name && 
+                      r.guard_name.toLowerCase().includes(query)
+                    );
+                    return matchLoc || matchGuard;
+                  });
+                  return filteredLocations.map(loc => {
                   const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
                   const isLocLocked = !!lockedLocations[loc.id];
                   return (
@@ -617,7 +644,8 @@ export const TodayDuty: React.FC = () => {
                       })}
                     </tr>
                   );
-                })}
+                })
+              })()}
               </tbody>
             </table>
           </div>
