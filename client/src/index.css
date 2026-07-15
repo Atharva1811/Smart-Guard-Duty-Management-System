@@ -76,6 +76,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  input, select, textarea {
+    color: hsl(var(--foreground)) !important;
+  }
 }
 
 /* Custom UI styling rules */

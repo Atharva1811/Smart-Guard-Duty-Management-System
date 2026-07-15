@@ -46,6 +46,9 @@ export const TodayDuty: React.FC = () => {
 
   // Lock Duration Modal
   const [lockModalCell, setLockModalCell] = useState<{ locationId: number; shift: string; guardId: number } | null>(null);
+  
+  // Location Level Locks
+  const [lockedLocations, setLockedLocations] = useState<Record<number, boolean>>({});
 
   const loadData = async (dateStr: string) => {
     setLoading(true);
@@ -96,6 +99,18 @@ export const TodayDuty: React.FC = () => {
       } else {
         setRoster(assignments);
       }
+
+      // Compute initial lockedLocations state from loaded assignments
+      const locLockMap: Record<number, boolean> = {};
+      const activeAssignmentsList = assignments.length > 0 ? assignments : [];
+      locs.forEach((l: any) => {
+        const activeShifts = [...(l.shift || 'Morning,Evening,Night').split(','), 'Reserve'];
+        const shiftsForLoc = activeAssignmentsList.filter((a: any) => a.location_id === l.id && activeShifts.includes(a.shift));
+        if (shiftsForLoc.length > 0 && shiftsForLoc.every((s: any) => s.status === 'Locked')) {
+          locLockMap[l.id] = true;
+        }
+      });
+      setLockedLocations(locLockMap);
     } catch (err) {
       console.error('Failed to load roster data:', err);
     } finally {
@@ -230,6 +245,28 @@ export const TodayDuty: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Location Level Lock/Unlock
+  const handleToggleLocationLock = async (locationId: number) => {
+    const isLocked = !lockedLocations[locationId];
+
+    setLockedLocations(prev => ({
+      ...prev,
+      [locationId]: isLocked
+    }));
+
+    // Set all shift cells for this location to Locked or Assigned/Vacant locally
+    const copy = roster.map(cell => {
+      if (cell.location_id === locationId) {
+        return {
+          ...cell,
+          status: isLocked ? 'Locked' : (cell.guard_id ? 'Assigned' : 'Vacant')
+        };
+      }
+      return cell;
+    });
+    setRoster(copy);
   };
 
   // Cell Lock/Unlock override
@@ -513,9 +550,28 @@ export const TodayDuty: React.FC = () => {
               <tbody>
                 {locations.map(loc => {
                   const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+                  const isLocLocked = !!lockedLocations[loc.id];
                   return (
                     <tr key={loc.id}>
-                      <td className="font-bold text-foreground bg-muted/5">{translateText(loc.locationName)}</td>
+                      <td className="font-bold text-foreground bg-muted/5 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={isLocLocked ? "text-amber-500 line-through opacity-80" : ""}>
+                            {translateText(loc.locationName)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLocationLock(loc.id)}
+                            title={isLocLocked ? "Unlock Checkpoint" : "Lock Checkpoint (Skip scheduling)"}
+                            className="text-muted-foreground hover:text-foreground no-print focus:outline-none transition-all p-1"
+                          >
+                            {isLocLocked ? (
+                              <Lock className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+                            ) : (
+                              <Unlock className="h-3.5 w-3.5 opacity-30 hover:opacity-100" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
                       {['Night', 'Morning', 'Evening', 'Reserve'].map(s => {
                         const cell = roster.find(r => r.location_id === loc.id && r.shift === s);
                         const isActive = activeShifts.includes(s) || s === 'Reserve';
