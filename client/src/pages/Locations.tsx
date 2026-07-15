@@ -120,7 +120,10 @@ export const Locations: React.FC = () => {
   };
 
   const handleBulkSubmit = async () => {
-    const names = bulkNames.split(/,|\n/).map(n => n.trim()).filter(n => n.length > 0);
+    const hasNewlines = bulkNames.includes('\n') || bulkNames.includes('\r');
+    const names = hasNewlines
+      ? bulkNames.split(/\r\n|\n|\r/).map(n => n.trim()).filter(n => n.length > 0)
+      : bulkNames.split(',').map(n => n.trim()).filter(n => n.length > 0);
     if (names.length === 0) return;
 
     try {
