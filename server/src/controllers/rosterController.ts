@@ -195,6 +195,82 @@ export const checkConflicts = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+export const lockAssignment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { date, locationId, shift, guardId, duration } = req.body;
+    if (!date || !locationId || !shift || !guardId || !duration) {
+      return sendError(res, 'Missing parameters. Date, locationId, shift, guardId, and duration are required.', 400, 'Bad Request');
+    }
+
+    const start = new Date(date);
+    for (let i = 0; i < duration; i++) {
+      const targetDate = new Date(start);
+      targetDate.setDate(start.getDate() + i);
+      const targetDateStr = targetDate.toISOString().split('T')[0];
+
+      // Upsert assignment for that date/location/shift to Locked
+      const existing = await prisma.dutyAssignment.findFirst({
+        where: {
+          assignmentDate: targetDateStr,
+          locationId: Number(locationId),
+          shift
+        }
+      });
+
+      if (existing) {
+        await prisma.dutyAssignment.update({
+          where: { id: existing.id },
+          data: {
+            guardId: Number(guardId),
+            status: 'Locked'
+          }
+        });
+      } else {
+        await prisma.dutyAssignment.create({
+          data: {
+            assignmentDate: targetDateStr,
+            locationId: Number(locationId),
+            shift,
+            guardId: Number(guardId),
+            status: 'Locked'
+          }
+        });
+      }
+    }
+
+    sendSuccess(res, `Guard successfully locked for ${duration} days.`);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unlockAssignment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { date, locationId, shift } = req.body;
+    if (!date || !locationId || !shift) {
+      return sendError(res, 'Missing parameters. Date, locationId, and shift are required.', 400, 'Bad Request');
+    }
+
+    const existing = await prisma.dutyAssignment.findFirst({
+      where: {
+        assignmentDate: date,
+        locationId: Number(locationId),
+        shift
+      }
+    });
+
+    if (existing) {
+      await prisma.dutyAssignment.update({
+        where: { id: existing.id },
+        data: { status: 'Assigned' }
+      });
+    }
+
+    sendSuccess(res, 'Slot unlocked successfully.');
+  } catch (error) {
+    next(error);
+  }
+};
 
 const shiftFriendly = (shift: string) => {
   return shift === 'Morning' ? 'Morning Shift' : shift === 'Evening' ? 'Evening Shift' : 'Night Shift';

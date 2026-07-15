@@ -43,6 +43,9 @@ export const TodayDuty: React.FC = () => {
   // Drag and drop local state cache
   const [draggedCell, setDraggedCell] = useState<{ locationId: number; shift: string } | null>(null);
 
+  // Lock Duration Modal
+  const [lockModalCell, setLockModalCell] = useState<{ locationId: number; shift: string; guardId: number } | null>(null);
+
   const loadData = async (dateStr: string) => {
     setLoading(true);
     try {
@@ -229,16 +232,62 @@ export const TodayDuty: React.FC = () => {
   };
 
   // Cell Lock/Unlock override
-  const handleToggleLock = (locationId: number, shift: string, e: React.MouseEvent) => {
+  const handleToggleLock = async (locationId: number, shift: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const cellIndex = roster.findIndex(r => r.location_id === locationId && r.shift === shift);
-    if (cellIndex !== -1) {
+    const cell = roster.find(r => r.location_id === locationId && r.shift === shift);
+    if (!cell || !cell.guard_id) return;
+
+    if (cell.status === 'Locked') {
+      try {
+        await api.post('/api/roster/unlock', {
+          date: activeDate,
+          locationId,
+          shift
+        });
+        
+        const copy = [...roster];
+        const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
+        if (idx !== -1) {
+          copy[idx].status = 'Assigned';
+          setRoster(copy);
+        }
+      } catch (err) {
+        console.error('Failed to unlock:', err);
+      }
+    } else {
+      setLockModalCell({
+        locationId,
+        shift,
+        guardId: cell.guard_id
+      });
+    }
+  };
+
+  const handleLockDurationSubmit = async (duration: number) => {
+    if (!lockModalCell) return;
+    const { locationId, shift, guardId } = lockModalCell;
+
+    try {
+      await api.post('/api/roster/lock', {
+        date: activeDate,
+        locationId,
+        shift,
+        guardId,
+        duration
+      });
+
       const copy = [...roster];
-      const cell = copy[cellIndex];
-      if (cell.guard_id) {
-        cell.status = cell.status === 'Locked' ? 'Assigned' : 'Locked';
+      const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
+      if (idx !== -1) {
+        copy[idx].status = 'Locked';
         setRoster(copy);
       }
+      
+      loadData(activeDate);
+    } catch (err) {
+      console.error('Failed to lock:', err);
+    } finally {
+      setLockModalCell(null);
     }
   };
 
@@ -610,6 +659,40 @@ export const TodayDuty: React.FC = () => {
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* LOCK DURATION MODAL */}
+      {lockModalCell && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div>
+              <h3 className="font-bold text-md text-foreground">Lock Guard Assignment</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Select lock duration (1 to 6 days) for this guard's spot and shift.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map(days => (
+                <button
+                  key={days}
+                  onClick={() => handleLockDurationSubmit(days)}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-border bg-muted/20 hover:bg-primary hover:text-white transition-all"
+                >
+                  {days} {days === 1 ? 'Day' : 'Days'}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button 
+                onClick={() => setLockModalCell(null)}
+                className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted-foreground hover:bg-muted"
+              >
+                Cancel
               </button>
             </div>
           </div>
