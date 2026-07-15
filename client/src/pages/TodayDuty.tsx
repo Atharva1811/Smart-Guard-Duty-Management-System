@@ -427,10 +427,10 @@ export const TodayDuty: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Checkpoint Point', 'Morning Shift', 'Evening Shift', 'Night Shift', 'Reserve'];
+    const headers = ['Checkpoint Point', 'Night Shift', 'Morning Shift', 'Evening Shift', 'Reserve'];
     const rows = locations.map(loc => {
       const line = [translateText(loc.locationName)];
-      ['Morning', 'Evening', 'Night', 'Reserve'].forEach(s => {
+      ['Night', 'Morning', 'Evening', 'Reserve'].forEach(s => {
         const match = roster.find(r => r.location_id === loc.id && r.shift === s);
         line.push(match?.guard_name ? `${translateText(match.guard_name)} (${match.guard_code})` : 'Vacant');
       });
@@ -502,9 +502,9 @@ export const TodayDuty: React.FC = () => {
               <thead>
                 <tr>
                   <th className="w-1/5">{t('locationNode')}</th>
+                  <th>{t('nightShift')}</th>
                   <th>{t('morningShift')}</th>
                   <th>{t('eveningShift')}</th>
-                  <th>{t('nightShift')}</th>
                   <th>{t('reserveGuard')}</th>
                 </tr>
               </thead>
@@ -514,7 +514,7 @@ export const TodayDuty: React.FC = () => {
                   return (
                     <tr key={loc.id}>
                       <td className="font-bold text-foreground bg-muted/5">{translateText(loc.locationName)}</td>
-                      {['Morning', 'Evening', 'Night', 'Reserve'].map(s => {
+                      {['Night', 'Morning', 'Evening', 'Reserve'].map(s => {
                         const cell = roster.find(r => r.location_id === loc.id && r.shift === s);
                         const isActive = activeShifts.includes(s) || s === 'Reserve';
                         

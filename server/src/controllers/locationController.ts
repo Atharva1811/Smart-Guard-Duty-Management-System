@@ -6,7 +6,7 @@ import { sendSuccess, sendError } from '../utils/response.js';
 export const getAllLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const locations = await prisma.location.findMany({
-      orderBy: { locationName: 'asc' },
+      orderBy: { id: 'asc' },
     });
     sendSuccess(res, 'Locations fetched successfully.', locations);
   } catch (error) {
