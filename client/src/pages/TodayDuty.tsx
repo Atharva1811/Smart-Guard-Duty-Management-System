@@ -39,6 +39,7 @@ export const TodayDuty: React.FC = () => {
   const [overrideShift, setOverrideShift] = useState<string>('');
   const [overrideGuardId, setOverrideGuardId] = useState<string>('');
   const [candidates, setCandidates] = useState<any[]>([]);
+  const [candidateSearch, setCandidateSearch] = useState<string>('');
 
   // Drag and drop local state cache
   const [draggedCell, setDraggedCell] = useState<{ locationId: number; shift: string } | null>(null);
@@ -311,6 +312,7 @@ export const TodayDuty: React.FC = () => {
 
   // Open override picker modal
   const handleOpenOverride = async (locationId: number, shift: string) => {
+    setCandidateSearch('');
     const loc = locations.find(l => l.id === locationId);
     setOverrideLoc(loc);
     setOverrideShift(shift);
@@ -624,6 +626,13 @@ export const TodayDuty: React.FC = () => {
 
             <div className="space-y-2">
               <label className="block text-xs font-semibold text-muted-foreground">Select Replacement Candidate</label>
+              <input
+                type="text"
+                placeholder="Search candidates by name or code..."
+                value={candidateSearch}
+                onChange={(e) => setCandidateSearch(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-border bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary focus:text-white placeholder-slate-500"
+              />
               <select 
                 value={overrideGuardId}
                 onChange={(e) => setOverrideGuardId(e.target.value)}
@@ -635,8 +644,13 @@ export const TodayDuty: React.FC = () => {
                     .filter(r => !(overrideLoc && r.location_id === overrideLoc.id && r.shift === overrideShift))
                     .map(r => r.guard_id)
                     .filter(id => id !== null && id !== undefined);
-                  const availableCandidates = candidates.filter(c => !activeGuardIds.includes(c.id));
-                  return availableCandidates.map(c => (
+                  
+                  const query = candidateSearch.toLowerCase();
+                  const filteredCandidates = candidates
+                    .filter(c => !activeGuardIds.includes(c.id))
+                    .filter(c => c.name.toLowerCase().includes(query) || c.guardCode.toLowerCase().includes(query));
+
+                  return filteredCandidates.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.name} ({c.guardCode})
                     </option>
