@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { api } from '../config/api.ts';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, FileInput } from 'lucide-react';
 
 export const Locations: React.FC = () => {
   const { t, translateText } = useTranslation();
@@ -13,7 +13,9 @@ export const Locations: React.FC = () => {
 
   // Modal controls
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
   const [selectedLoc, setSelectedLoc] = useState<any | null>(null);
+  const [bulkNames, setBulkNames] = useState<string>('');
 
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -117,6 +119,30 @@ export const Locations: React.FC = () => {
     }
   };
 
+  const handleBulkSubmit = async () => {
+    const names = bulkNames.split(/,|\n/).map(n => n.trim()).filter(n => n.length > 0);
+    if (names.length === 0) return;
+
+    try {
+      for (const name of names) {
+        await api.post('/api/locations', {
+          locationName: name,
+          requiredGuards: 1,
+          priority: 2,
+          securityLevel: 'Standard',
+          shift: 'Morning,Evening,Night',
+          status: 'Active',
+        });
+      }
+      setShowBulkModal(false);
+      setBulkNames('');
+      loadLocations();
+    } catch (e) {
+      console.error(e);
+      alert('Bulk import execution failed.');
+    }
+  };
+
   const filtered = locations.filter(l => 
     l.locationName.toLowerCase().includes(search.toLowerCase())
   );
@@ -129,13 +155,22 @@ export const Locations: React.FC = () => {
           <p className="text-sm text-muted-foreground mt-1">{t('locationsSub')}</p>
         </div>
 
-        <button 
-          onClick={openAddModal}
-          className="px-3 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-105 flex items-center gap-1.5 shadow-sm ml-auto sm:ml-0"
-        >
-          <Plus className="h-4 w-4" />
-          <span>{t('addLocation')}</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button 
+            onClick={openAddModal}
+            className="px-3 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-105 flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t('addLocation')}</span>
+          </button>
+          <button 
+            onClick={() => setShowBulkModal(true)}
+            className="px-3 py-2 text-sm font-semibold rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-1.5 shadow-sm"
+          >
+            <FileInput className="h-4 w-4" />
+            <span>Bulk Locations</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Filter Bar */}
@@ -279,6 +314,43 @@ export const Locations: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* BULK IMPORT DIALOG */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div>
+              <h3 className="font-bold text-md text-foreground">Bulk Add Locations</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Enter multiple location checkpoint names, separated by commas or newlines.
+              </p>
+            </div>
+
+            <textarea 
+              rows={6}
+              value={bulkNames}
+              onChange={(e) => setBulkNames(e.target.value)}
+              placeholder="e.g. Server Room Entrance, Main Gate Checkpoint, Parking Zone B..."
+              className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary focus:text-white"
+            />
+
+            <div className="flex gap-2 justify-end text-xs pt-2">
+              <button 
+                onClick={() => { setShowBulkModal(false); setBulkNames(''); }}
+                className="px-3 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleBulkSubmit}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold"
+              >
+                Import Checkpoints
+              </button>
+            </div>
           </div>
         </div>
       )}
