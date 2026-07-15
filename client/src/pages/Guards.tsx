@@ -52,8 +52,14 @@ export const Guards: React.FC = () => {
 
   const openAddModal = () => {
     setSelectedGuard(null);
+    const maxNum = guards.reduce((acc, curr) => {
+      const num = parseInt(curr.guardCode.replace(/\D/g, ''), 10);
+      return isNaN(num) ? acc : Math.max(acc, num);
+    }, 0);
+    const nextCode = `G${String(maxNum + 1).padStart(3, '0')}`;
+
     reset({
-      guardCode: `G${String(guards.length + 1).padStart(3, '0')}`,
+      guardCode: nextCode,
       name: '',
       phone: '',
       email: '',
