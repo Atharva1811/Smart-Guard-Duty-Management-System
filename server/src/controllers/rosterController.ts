@@ -59,37 +59,50 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
       return sendError(res, 'Date and assignments list are required.', 400, 'Bad Request');
     }
 
-    // Save using database transaction
+    // 1. Fetch lookup records beforehand to avoid N+1 queries inside transaction
+    const [guardsList, locationsList] = await Promise.all([
+      prisma.guard.findMany(),
+      prisma.location.findMany()
+    ]);
+
+    const guardsMap = new Map(guardsList.map(g => [g.id, g]));
+    const locationsMap = new Map(locationsList.map(l => [l.id, l]));
+
+    const assignmentsToInsert = assignments.map(a => ({
+      guardId: a.guard_id || null,
+      locationId: a.location_id,
+      shift: a.shift,
+      assignmentDate: date,
+      status: a.status || 'Assigned'
+    }));
+
+    const historyToInsert = assignments
+      .filter(a => a.guard_id)
+      .map(a => {
+        const guard = guardsMap.get(a.guard_id);
+        const location = locationsMap.get(a.location_id);
+        return {
+          guardId: a.guard_id,
+          locationId: a.location_id,
+          shift: a.shift,
+          assignmentDate: date,
+          remarks: `Assigned to ${location?.locationName || 'checkpoint'} on ${shiftFriendly(a.shift)}`
+        };
+      });
+
+    // 2. Perform DB operations inside transaction
     await prisma.$transaction(async (tx) => {
-      // 1. Delete existing for that date
+      // Delete existing
       await tx.dutyAssignment.deleteMany({ where: { assignmentDate: date } });
 
-      // 2. Insert new records
-      for (const a of assignments) {
-        await tx.dutyAssignment.create({
-          data: {
-            guardId: a.guard_id || null,
-            locationId: a.location_id,
-            shift: a.shift,
-            assignmentDate: date,
-            status: a.status || 'Assigned'
-          }
-        });
+      // Bulk Insert assignments
+      if (assignmentsToInsert.length > 0) {
+        await tx.dutyAssignment.createMany({ data: assignmentsToInsert });
+      }
 
-        // 3. Log to History trail
-        if (a.guard_id) {
-          const guard = await tx.guard.findUnique({ where: { id: a.guard_id } });
-          const location = await tx.location.findUnique({ where: { id: a.location_id } });
-          await tx.assignmentHistory.create({
-            data: {
-              guardId: a.guard_id,
-              locationId: a.location_id,
-              shift: a.shift,
-              assignmentDate: date,
-              remarks: `Assigned to ${location?.locationName || 'checkpoint'} on ${shiftFriendly(a.shift)}`
-            }
-          });
-        }
+      // Bulk Insert history
+      if (historyToInsert.length > 0) {
+        await tx.assignmentHistory.createMany({ data: historyToInsert });
       }
     });
 
