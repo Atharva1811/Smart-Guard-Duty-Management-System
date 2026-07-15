@@ -100,7 +100,7 @@ export const generateRosterSchedule = async (
     // Check attendance status
     const attRecord = attendance.find(a => a.guardId === guard.id);
     if (attRecord) {
-      const unavailableStatuses = [GuardStatus.ABSENT, GuardStatus.LEAVE, GuardStatus.MEDICAL, GuardStatus.TRAINING];
+      const unavailableStatuses: GuardStatus[] = [GuardStatus.ABSENT, GuardStatus.LEAVE, GuardStatus.MEDICAL, GuardStatus.TRAINING];
       if (unavailableStatuses.includes(attRecord.status)) {
         return false;
       }
@@ -370,7 +370,7 @@ export const getReplacementCandidates = async (
     // Filter absent statuses
     const att = attendance.find(a => a.guardId === guard.id);
     if (att) {
-      const bad = [GuardStatus.ABSENT, GuardStatus.LEAVE, GuardStatus.MEDICAL, GuardStatus.TRAINING];
+      const bad: GuardStatus[] = [GuardStatus.ABSENT, GuardStatus.LEAVE, GuardStatus.MEDICAL, GuardStatus.TRAINING];
       if (bad.includes(att.status)) return false;
     }
 
