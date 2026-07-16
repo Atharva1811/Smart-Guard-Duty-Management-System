@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { motion } from 'framer-motion';
-import { Lock, User as UserIcon, AlertCircle } from 'lucide-react';
+import { Lock, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -13,6 +13,7 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -88,11 +89,18 @@ export const Login: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   {...register('password', { required: true })}
-                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-10 text-sm text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
                   placeholder="Enter security key"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {errors.password && <span className="text-[10px] text-red-400 mt-1 block">Password is required</span>}
             </div>
