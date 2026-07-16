@@ -77,7 +77,7 @@ export const Login: React.FC = () => {
                   autoCorrect="off"
                   spellCheck="false"
                   {...register('username', { required: true })}
-                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-4 text-sm !text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
                   placeholder="Enter username"
                 />
               </div>
@@ -91,7 +91,7 @@ export const Login: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   {...register('password', { required: true })}
-                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-10 text-sm text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-900/30 py-2.5 pl-10 pr-10 text-sm !text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
                   placeholder="Enter security key"
                 />
                 <button
