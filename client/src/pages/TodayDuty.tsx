@@ -10,7 +10,10 @@ import {
   Trash2, 
   Lock, 
   Unlock, 
-  Search
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  Info
 } from 'lucide-react';
 
 export const TodayDuty: React.FC = () => {
@@ -46,6 +49,13 @@ export const TodayDuty: React.FC = () => {
   
   // Location Level Locks
   const [lockedLocations, setLockedLocations] = useState<Record<number, boolean>>({});
+
+  // Custom alert dialog state
+  const [customAlert, setCustomAlert] = useState<{ title: string; message: string; type?: 'success' | 'info' | 'warning' } | null>(null);
+
+  const showAlert = (message: string, title = 'Notification', type: 'success' | 'info' | 'warning' = 'info') => {
+    setCustomAlert({ title, message, type });
+  };
 
   const loadData = async (dateStr: string) => {
     setLoading(true);
@@ -205,7 +215,7 @@ export const TodayDuty: React.FC = () => {
       }
     } catch (e) {
       console.error(e);
-      alert('Timetable generation failed.');
+      showAlert('Timetable generation failed. Please try again.', 'Error', 'warning');
     } finally {
       setGenerating(false);
     }
@@ -228,12 +238,12 @@ export const TodayDuty: React.FC = () => {
       });
 
       if (res.data.success) {
-        alert('Daily duty roster saved successfully.');
+        showAlert('Daily duty roster saved successfully.', 'Success', 'success');
         loadData(activeDate);
       }
     } catch (e) {
       console.error(e);
-      alert('Failed to save assignments.');
+      showAlert('Failed to save assignments. Please check database connectivity.', 'Error', 'warning');
     } finally {
       setSaving(false);
     }
@@ -416,7 +426,7 @@ export const TodayDuty: React.FC = () => {
               guard_code: replacement.guardCode,
               status: 'Assigned'
             };
-            alert(`Auto-staffed: ${replacement.name} has been assigned to ${translateText(copy[prevCellIndex].location_name)} (${copy[prevCellIndex].shift}) to replace ${guard.name}.`);
+            showAlert(`Auto-staffed: ${replacement.name} has been assigned to ${translateText(copy[prevCellIndex].location_name)} (${copy[prevCellIndex].shift}) to replace ${guard.name}.`, 'Auto-Staffing Update', 'success');
           }
         }
       } else {
@@ -837,6 +847,46 @@ export const TodayDuty: React.FC = () => {
                 className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted-foreground hover:bg-muted"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM ALERT MODAL */}
+      {customAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl p-6 shadow-2xl space-y-5 transform transition-all scale-100 duration-200 animate-in zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-xl shrink-0 ${
+                customAlert.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                customAlert.type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
+                'bg-primary/10 text-primary'
+              }`}>
+                {customAlert.type === 'success' ? (
+                  <CheckCircle2 className="h-6 w-6" />
+                ) : customAlert.type === 'warning' ? (
+                  <AlertCircle className="h-6 w-6" />
+                ) : (
+                  <Info className="h-6 w-6" />
+                )}
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <h3 className="font-bold text-lg text-foreground leading-none">
+                  {customAlert.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {customAlert.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button 
+                onClick={() => setCustomAlert(null)}
+                className="px-5 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:brightness-105 transition-all shadow-md focus:outline-none"
+              >
+                OK
               </button>
             </div>
           </div>
