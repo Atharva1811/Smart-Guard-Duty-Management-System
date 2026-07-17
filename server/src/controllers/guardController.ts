@@ -4,7 +4,7 @@ import { prisma } from '../config/db.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { GuardStatus } from '@prisma/client';
 
-export const getAllGuards = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllGuards = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const guards = await prisma.guard.findMany({
       orderBy: { guardCode: 'asc' },

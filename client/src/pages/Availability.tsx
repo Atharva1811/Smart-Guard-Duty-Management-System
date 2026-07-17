@@ -12,19 +12,13 @@ export const Availability: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
-  const loadAttendance = async (dateStr: string) => {
+  const loadAttendance = async (_dateStr: string) => {
     setLoading(true);
     try {
-      const [guardsRes, rosterRes] = await Promise.all([
-        api.get('/api/guards'),
-        api.get(`/api/roster/assignments?date=${dateStr}`) // Optional, lets fetch attendance
-      ]);
+      const guardsRes = await api.get('/api/guards');
 
       const gList = guardsRes.data.data;
       setGuards(gList);
-
-      // Fetch daily attendance records if any
-      const attendanceRes = await api.get(`/api/guards`); // We can fetch guard list status
       // Create local attendance statuses array
       const list = gList.map((g: any) => ({
         guardId: g.id,

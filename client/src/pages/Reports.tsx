@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { api } from '../config/api.ts';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/export.ts';
-import { BarChart3, FileSpreadsheet, FileDown, Printer } from 'lucide-react';
+import { BarChart3, FileSpreadsheet, FileDown } from 'lucide-react';
 
 export const Reports: React.FC = () => {
   const { t, translateText } = useTranslation();

@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 
-export const getAllLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllLocations = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const locations = await prisma.location.findMany({
       orderBy: { id: 'asc' },

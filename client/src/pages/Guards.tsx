@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { api } from '../config/api.ts';
-import { Plus, Search, Edit, Trash2, Users, FileInput } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, FileInput } from 'lucide-react';
 
 export const Guards: React.FC = () => {
   const { t, translateText } = useTranslation();
@@ -21,7 +21,7 @@ export const Guards: React.FC = () => {
   const [bulkNames, setBulkNames] = useState<string>('');
   const [locations, setLocations] = useState<any[]>([]);
 
-  const { register, handleSubmit, reset, setValue } = useForm({
+  const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       guardCode: '',
       name: '',

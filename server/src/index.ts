@@ -24,7 +24,6 @@ dotenv.config();
 const app = express();
 app.set('trust proxy', 1); // Trust Render reverse proxy for accurate IP rate limiting
 const PORT = process.env.PORT || 5000;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // 1. Establish Database Connection
 connectDB();
@@ -60,7 +59,7 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/users', userRoutes);
 
 // Root heartbeat check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'OK', message: 'Smart Guard Duty API backend is running.' });
 });
 

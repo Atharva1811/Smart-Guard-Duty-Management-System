@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../config/api.ts';
-import { FileCheck, Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X } from 'lucide-react';
 
 export const Leaves: React.FC = () => {
   const { t, translateText } = useTranslation();

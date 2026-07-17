@@ -1,11 +1,9 @@
 // server/src/controllers/userController.ts
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
 import { prisma } from '../config/db.js';
 import { sendSuccess, sendError } from '../utils/response.js';
-import { Role } from '@prisma/client';
 
-export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllUsers = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const users = await prisma.user.findMany({
       orderBy: { name: 'asc' },

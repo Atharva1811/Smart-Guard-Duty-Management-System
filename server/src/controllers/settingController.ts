@@ -1,9 +1,9 @@
 // server/src/controllers/settingController.ts
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess } from '../utils/response.js';
 
-export const getSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const setting = await prisma.setting.findUnique({ where: { key: 'system_config' } });
     if (!setting) {

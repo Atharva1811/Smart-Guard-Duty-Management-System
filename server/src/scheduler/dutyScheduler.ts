@@ -395,8 +395,8 @@ export const detectTimetableConflicts = async (
 // Get replacement recommendations
 export const getReplacementCandidates = async (
   dateStr: string,
-  locationId: number,
-  shift: string
+  _locationId: number,
+  _shift: string
 ) => {
   const guards = await prisma.guard.findMany();
   const attendance = await prisma.attendance.findMany({ where: { attendanceDate: dateStr } });

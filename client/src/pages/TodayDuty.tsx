@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { api } from '../config/api.ts';
-import { exportToCSV, exportToPDF } from '../utils/export.ts';
+import { exportToCSV } from '../utils/export.ts';
 import { 
   Printer, 
   RefreshCw, 
@@ -10,10 +10,6 @@ import {
   Trash2, 
   Lock, 
   Unlock, 
-  AlertCircle, 
-  UserCheck, 
-  UserMinus,
-  AlertTriangle,
   Search
 } from 'lucide-react';
 
@@ -27,7 +23,6 @@ export const TodayDuty: React.FC = () => {
   // Conflicts and shortages
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [shortages, setShortages] = useState<any[]>([]);
-  const [vacantLocations, setVacantLocations] = useState<string[]>([]);
   
   // Loading and modals states
   const [loading, setLoading] = useState<boolean>(true);
@@ -129,16 +124,13 @@ export const TodayDuty: React.FC = () => {
     if (roster.length > 0) {
       // 1. Detect shortages
       const shortList: any[] = [];
-      const vacantLocs: string[] = [];
       
       locations.forEach(loc => {
         const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
-        let locVacant = false;
 
         activeShifts.forEach(s => {
           const match = roster.find(r => r.location_id === loc.id && r.shift === s);
           if (!match || !match.guard_id) {
-            locVacant = true;
             shortList.push({
               locationId: loc.id,
               locationName: loc.locationName,
@@ -146,14 +138,9 @@ export const TodayDuty: React.FC = () => {
             });
           }
         });
-
-        if (locVacant) {
-          vacantLocs.push(loc.locationName);
-        }
       });
 
       setShortages(shortList);
-      setVacantLocations(vacantLocs);
 
       // 2. Fetch conflicts list from backend
       api.post('/api/roster/conflicts', { date: activeDate, roster })
@@ -455,7 +442,7 @@ export const TodayDuty: React.FC = () => {
   };
 
   // Drag and Drop implementation
-  const handleDragStart = (e: React.DragEvent, locationId: number, shift: string) => {
+  const handleDragStart = (_e: React.DragEvent, locationId: number, shift: string) => {
     setDraggedCell({ locationId, shift });
   };
 

@@ -60,12 +60,8 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
     }
 
     // 1. Fetch lookup records beforehand to avoid N+1 queries inside transaction
-    const [guardsList, locationsList] = await Promise.all([
-      prisma.guard.findMany(),
-      prisma.location.findMany()
-    ]);
+    const locationsList = await prisma.location.findMany();
 
-    const guardsMap = new Map(guardsList.map(g => [g.id, g]));
     const locationsMap = new Map(locationsList.map(l => [l.id, l]));
 
     const assignmentsToInsert = assignments.map(a => ({
@@ -79,7 +75,6 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
     const historyToInsert = assignments
       .filter(a => a.guard_id)
       .map(a => {
-        const guard = guardsMap.get(a.guard_id);
         const location = locationsMap.get(a.location_id);
         return {
           guardId: a.guard_id,

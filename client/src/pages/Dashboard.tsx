@@ -60,8 +60,7 @@ export const Dashboard: React.FC = () => {
         const roster = rosterRes.data.data;
         const history = historyRes.data.data.results || [];
 
-        // Count shift allocation stats
-        let morning = 0, evening = 0, night = 0, vacant = 0;
+        let morning = 0, evening = 0, night = 0;
         roster.forEach((a: any) => {
           if (a.guard_id) {
             if (a.shift === 'Morning') morning++;

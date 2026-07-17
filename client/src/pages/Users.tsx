@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from '../context/LanguageContext.tsx';
 import { api } from '../config/api.ts';
-import { Plus, Trash2, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export const Users: React.FC = () => {
   const { t } = useTranslation();

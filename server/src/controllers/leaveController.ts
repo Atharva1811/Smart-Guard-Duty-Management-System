@@ -4,7 +4,7 @@ import { prisma } from '../config/db.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { LeaveStatus, GuardStatus } from '@prisma/client';
 
-export const getAllLeaves = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllLeaves = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const leaves = await prisma.leaveRequest.findMany({
       include: {

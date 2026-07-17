@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onAuditClick }) => {
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
   const [time, setTime] = useState<string>('');
   const [isDark, setIsDark] = useState<boolean>(false);
   const [alertsCount, setAlertsCount] = useState<number>(0);
