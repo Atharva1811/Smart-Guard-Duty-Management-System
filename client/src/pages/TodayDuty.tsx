@@ -175,26 +175,29 @@ export const TodayDuty: React.FC = () => {
 
       if (res.data.success) {
         const generatedRoster = res.data.data.roster;
-        const newRoster = [...roster];
-
-        newRoster.forEach(cell => {
-          // If locked, skip
-          if (cell.status === 'Locked') return;
+        const newRoster = roster.map(cell => {
+          if (cell.status === 'Locked') return cell;
 
           const locationData = generatedRoster[cell.location_id];
           const shiftData = locationData ? locationData[cell.shift] : null;
 
           if (shiftData) {
             const guard = guards.find(g => g.id === shiftData.guard_id);
-            cell.guard_id = shiftData.guard_id;
-            cell.guard_name = shiftData.guard_name;
-            cell.guard_code = guard ? guard.guardCode : '??';
-            cell.status = 'Assigned';
+            return {
+              ...cell,
+              guard_id: shiftData.guard_id,
+              guard_name: shiftData.guard_name,
+              guard_code: guard ? guard.guardCode : '??',
+              status: 'Assigned'
+            };
           } else {
-            cell.guard_id = null;
-            cell.guard_name = null;
-            cell.guard_code = null;
-            cell.status = 'Vacant';
+            return {
+              ...cell,
+              guard_id: null,
+              guard_name: null,
+              guard_code: null,
+              status: 'Vacant'
+            };
           }
         });
 
@@ -275,7 +278,10 @@ export const TodayDuty: React.FC = () => {
         const copy = [...roster];
         const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
         if (idx !== -1) {
-          copy[idx].status = 'Assigned';
+          copy[idx] = {
+            ...copy[idx],
+            status: 'Assigned'
+          };
           setRoster(copy);
         }
       } catch (err) {
@@ -306,7 +312,10 @@ export const TodayDuty: React.FC = () => {
       const copy = [...roster];
       const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
       if (idx !== -1) {
-        copy[idx].status = 'Locked';
+        copy[idx] = {
+          ...copy[idx],
+          status: 'Locked'
+        };
         setRoster(copy);
       }
       
@@ -471,15 +480,21 @@ export const TodayDuty: React.FC = () => {
       const tempCode = copy[sourceIndex].guard_code;
       const tempStatus = copy[sourceIndex].status === 'Locked' ? 'Assigned' : copy[sourceIndex].status;
 
-      copy[sourceIndex].guard_id = copy[targetIndex].guard_id;
-      copy[sourceIndex].guard_name = copy[targetIndex].guard_name;
-      copy[sourceIndex].guard_code = copy[targetIndex].guard_code;
-      copy[sourceIndex].status = copy[targetIndex].status === 'Locked' ? 'Assigned' : copy[targetIndex].status;
+      copy[sourceIndex] = {
+        ...copy[sourceIndex],
+        guard_id: copy[targetIndex].guard_id,
+        guard_name: copy[targetIndex].guard_name,
+        guard_code: copy[targetIndex].guard_code,
+        status: copy[targetIndex].status === 'Locked' ? 'Assigned' : copy[targetIndex].status
+      };
 
-      copy[targetIndex].guard_id = tempId;
-      copy[targetIndex].guard_name = tempName;
-      copy[targetIndex].guard_code = tempCode;
-      copy[targetIndex].status = tempStatus;
+      copy[targetIndex] = {
+        ...copy[targetIndex],
+        guard_id: tempId,
+        guard_name: tempName,
+        guard_code: tempCode,
+        status: tempStatus
+      };
 
       setRoster(copy);
     }

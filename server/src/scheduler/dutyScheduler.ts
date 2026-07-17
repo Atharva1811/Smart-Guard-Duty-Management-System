@@ -225,8 +225,8 @@ export const generateRosterSchedule = async (
     shiftsToFill.forEach(shift => {
       if (!activeShifts.includes(shift)) return;
 
-      // Skip if already locked by override
-      if (roster[loc.id][shift] && roster[loc.id][shift].locked) return;
+      // Skip if already assigned (by lock, permanent, or sticky assignments)
+      if (roster[loc.id][shift] && roster[loc.id][shift].guard_id) return;
 
       // Find candidates matching shift rotation constraints
       const candidates = availableGuards.filter(g => {
@@ -300,7 +300,7 @@ export const generateRosterSchedule = async (
     if (unassignedGuards.length === 0) return;
 
     const cell = roster[loc.id]['Reserve'];
-    if (cell && cell.locked) return;
+    if (cell && cell.guard_id) return;
 
     const selected = unassignedGuards.shift();
     if (selected) {
