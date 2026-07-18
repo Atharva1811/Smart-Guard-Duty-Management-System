@@ -22,7 +22,7 @@ export const guardSchema = z.object({
   gender: z.string().optional(),
   permanentLocationId: z.number().nullable().optional(),
   permanentShift: z.string().nullable().optional(),
-  weeklyOff: z.number().int().min(0).max(6).default(0),
+  weeklyOff: z.number().int().min(-1).max(6).default(0),
   status: z.enum(['AVAILABLE', 'LEAVE', 'ABSENT', 'TRAINING', 'MEDICAL', 'HOLIDAY']).default('AVAILABLE'),
 });
 

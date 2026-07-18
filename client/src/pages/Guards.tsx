@@ -21,6 +21,12 @@ export const Guards: React.FC = () => {
   const [bulkNames, setBulkNames] = useState<string>('');
   const [locations, setLocations] = useState<any[]>([]);
 
+  // Bulk Weekly Off State
+  const [showBulkWeeklyOffModal, setShowBulkWeeklyOffModal] = useState<boolean>(false);
+  const [selectedBulkGuardIds, setSelectedBulkGuardIds] = useState<number[]>([]);
+  const [bulkGuardSearch, setBulkGuardSearch] = useState<string>('');
+  const [newWeeklyOffVal, setNewWeeklyOffVal] = useState<number>(-1);
+
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       guardCode: '',
@@ -30,7 +36,7 @@ export const Guards: React.FC = () => {
       gender: 'Male',
       permanentLocationId: '',
       permanentShift: '',
-      weeklyOff: 0,
+      weeklyOff: -1,
       status: 'AVAILABLE',
     }
   });
@@ -81,7 +87,7 @@ export const Guards: React.FC = () => {
       gender: 'Male',
       permanentLocationId: '',
       permanentShift: '',
-      weeklyOff: 0,
+      weeklyOff: -1,
       status: 'AVAILABLE',
     });
     setShowModal(true);
@@ -178,8 +184,30 @@ export const Guards: React.FC = () => {
   });
 
   const getDayName = (dayIndex: number) => {
+    if (dayIndex === -1) return 'None';
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayIndex];
+  };
+
+  const handleBulkWeeklyOffSave = async () => {
+    if (selectedBulkGuardIds.length === 0) {
+      alert('Please select at least one guard.');
+      return;
+    }
+    try {
+      const res = await api.post('/api/guards/bulk-weekly-off', {
+        guardIds: selectedBulkGuardIds,
+        weeklyOff: newWeeklyOffVal
+      });
+      if (res.data.success) {
+        alert('Weekly off updated successfully for selected guards.');
+        setShowBulkWeeklyOffModal(false);
+        loadGuards();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update weekly off.');
+    }
   };
 
   return (
@@ -204,6 +232,18 @@ export const Guards: React.FC = () => {
           >
             <FileInput className="h-4 w-4" />
             <span>Bulk Names</span>
+          </button>
+          <button 
+            onClick={() => {
+              setSelectedBulkGuardIds([]);
+              setBulkGuardSearch('');
+              setNewWeeklyOffVal(-1);
+              setShowBulkWeeklyOffModal(true);
+            }}
+            className="px-3 py-2 text-sm font-semibold rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-1.5 shadow-sm"
+          >
+            <Edit className="h-4 w-4" />
+            <span>Bulk Weekly Off</span>
           </button>
         </div>
       </div>
@@ -345,6 +385,7 @@ export const Guards: React.FC = () => {
                     {...register('weeklyOff', { valueAsNumber: true })}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
                   >
+                    <option value={-1}>None</option>
                     <option value={0}>Sunday</option>
                     <option value={1}>Monday</option>
                     <option value={2}>Tuesday</option>
@@ -446,6 +487,135 @@ export const Guards: React.FC = () => {
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold"
               >
                 Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* BULK WEEKLY OFF MODAL */}
+      {showBulkWeeklyOffModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl space-y-4 max-h-[90vh] flex flex-col">
+            <div>
+              <h3 className="font-bold text-md text-foreground">Bulk Edit Weekly Off</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Search, select multiple guards, and assign a new Weekly Off day.
+              </p>
+            </div>
+
+            {/* Guard search and selection list */}
+            <div className="space-y-2 flex-1 flex flex-col min-h-0">
+              <label className="block text-xs font-semibold text-muted-foreground">Select Guards ({selectedBulkGuardIds.length} selected)</label>
+              <input
+                type="text"
+                placeholder="Search guards by name or code..."
+                value={bulkGuardSearch}
+                onChange={(e) => setBulkGuardSearch(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-border bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary focus:text-white"
+              />
+
+              {/* Matching guards selection list */}
+              <div className="border border-border rounded-lg overflow-y-auto max-h-[250px] p-2 space-y-1 bg-muted/5 flex-1">
+                {(() => {
+                  const query = bulkGuardSearch.toLowerCase();
+                  const filtered = guards.filter(g => 
+                    g.name.toLowerCase().includes(query) || 
+                    g.guardCode.toLowerCase().includes(query)
+                  );
+
+                  if (filtered.length === 0) {
+                    return <div className="text-[10px] text-muted-foreground text-center py-4">No matching guards found.</div>;
+                  }
+
+                  return (
+                    <>
+                      <div className="flex justify-between items-center pb-2 mb-2 border-b border-border text-[10px] no-print">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const filteredIds = filtered.map(g => g.id);
+                            setSelectedBulkGuardIds(prev => {
+                              const union = new Set([...prev, ...filteredIds]);
+                              return Array.from(union);
+                            });
+                          }}
+                          className="text-primary hover:underline font-semibold"
+                        >
+                          Select All Matching
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const filteredIds = filtered.map(g => g.id);
+                            setSelectedBulkGuardIds(prev => prev.filter(id => !filteredIds.includes(id)));
+                          }}
+                          className="text-muted-foreground hover:underline font-semibold"
+                        >
+                          Deselect All Matching
+                        </button>
+                      </div>
+                      {filtered.map(g => {
+                        const isChecked = selectedBulkGuardIds.includes(g.id);
+                        return (
+                          <label key={g.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/30 cursor-pointer text-xs">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                setSelectedBulkGuardIds(prev => {
+                                  if (isChecked) {
+                                    return prev.filter(id => id !== g.id);
+                                  } else {
+                                    return [...prev, g.id];
+                                  }
+                                });
+                              }}
+                              className="rounded border-border"
+                            />
+                            <span className="flex-1 font-medium">{translateText(g.name)} ({g.guardCode})</span>
+                            <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Off: {getDayName(g.weeklyOff)}</span>
+                          </label>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Weekly off choice */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-muted-foreground">New Weekly Off Day</label>
+              <select
+                value={newWeeklyOffVal}
+                onChange={(e) => setNewWeeklyOffVal(Number(e.target.value))}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
+              >
+                <option value={-1}>None</option>
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={2}>Tuesday</option>
+                <option value={3}>Wednesday</option>
+                <option value={4}>Thursday</option>
+                <option value={5}>Friday</option>
+                <option value={6}>Saturday</option>
+              </select>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2 justify-end pt-2 text-xs">
+              <button 
+                onClick={() => setShowBulkWeeklyOffModal(false)}
+                className="px-3 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleBulkWeeklyOffSave}
+                disabled={selectedBulkGuardIds.length === 0}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+              >
+                Update Selected
               </button>
             </div>
           </div>

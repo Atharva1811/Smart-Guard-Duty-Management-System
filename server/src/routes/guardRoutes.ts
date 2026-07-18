@@ -1,6 +1,6 @@
 // server/src/routes/guardRoutes.ts
 import { Router } from 'express';
-import { getAllGuards, getGuardById, createGuard, updateGuard, deleteGuard } from '../controllers/guardController.js';
+import { getAllGuards, getGuardById, createGuard, updateGuard, deleteGuard, bulkUpdateWeeklyOff } from '../controllers/guardController.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validator.js';
 import { guardSchema } from '../validators/schemas.js';
@@ -8,6 +8,7 @@ import { guardSchema } from '../validators/schemas.js';
 const router = Router();
 
 router.get('/', authenticateToken, getAllGuards);
+router.post('/bulk-weekly-off', authenticateToken, authorizeRoles('ADMIN', 'SUPERVISOR'), bulkUpdateWeeklyOff);
 router.get('/:id', authenticateToken, getGuardById);
 
 router.post('/', 

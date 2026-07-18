@@ -92,3 +92,25 @@ export const deleteGuard = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
+
+export const bulkUpdateWeeklyOff = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { guardIds, weeklyOff } = req.body;
+    if (!Array.isArray(guardIds) || typeof weeklyOff !== 'number') {
+      return sendError(res, 'Invalid input parameters. guardIds array and weeklyOff integer are required.', 400, 'Bad Request');
+    }
+
+    await prisma.guard.updateMany({
+      where: {
+        id: { in: guardIds }
+      },
+      data: {
+        weeklyOff
+      }
+    });
+
+    sendSuccess(res, 'Guards weekly off updated successfully.');
+  } catch (error) {
+    next(error);
+  }
+};
