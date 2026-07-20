@@ -130,11 +130,10 @@ export const generateRosterSchedule = async (
     nightShiftStreakMap[g.id] = 0;
   });
 
-  // Populate maps from database history
+  // Populate workload & location maps from database history
   history.forEach(h => {
     const gId = h.guardId;
     const locId = h.locationId;
-    const shift = h.shift;
 
     if (gId && workloadMap[gId] !== undefined) {
       workloadMap[gId]++;
@@ -143,12 +142,24 @@ export const generateRosterSchedule = async (
         lastLocationMap[gId][locId] = 0;
       }
       lastLocationMap[gId][locId]++;
+    }
+  });
 
-      // Night shift consecutive streaks (check if assigned night in recent history)
-      if (shift === 'Night') {
-        nightShiftStreakMap[gId]++;
+  // Calculate consecutive night shift streak ending yesterday
+  guards.forEach(g => {
+    let streak = 0;
+    let checkDateObj = new Date(dateObj.getTime() - 86400000);
+    for (let day = 0; day < 7; day++) {
+      const checkDateStr = checkDateObj.toISOString().split('T')[0];
+      const workedNight = history.some(h => h.guardId === g.id && h.assignmentDate === checkDateStr && h.shift === 'Night');
+      if (workedNight) {
+        streak++;
+        checkDateObj.setDate(checkDateObj.getDate() - 1);
+      } else {
+        break;
       }
     }
+    nightShiftStreakMap[g.id] = streak;
   });
 
   // 3b. Permanent Assignment mapping

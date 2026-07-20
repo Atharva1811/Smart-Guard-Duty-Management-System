@@ -96,7 +96,7 @@ export const TodayDuty: React.FC = () => {
         const newRoster = roster.map(cell => {
           if (cell.status === 'Locked') return cell;
 
-          const locationData = generatedRoster[cell.location_id];
+          const locationData = generatedRoster[cell.location_id] || generatedRoster[String(cell.location_id)];
           const shiftData = locationData ? locationData[cell.shift] : null;
 
           if (shiftData && shiftData.guard_id) {
@@ -177,7 +177,7 @@ export const TodayDuty: React.FC = () => {
                   status: 'Locked'
                 });
               } else {
-                const genLocation = generatedRoster[loc.id];
+                const genLocation = generatedRoster[loc.id] || generatedRoster[String(loc.id)];
                 const genShift = genLocation ? genLocation[shift] : null;
                 if (genShift && genShift.guard_id) {
                   assignmentsToSave.push({
