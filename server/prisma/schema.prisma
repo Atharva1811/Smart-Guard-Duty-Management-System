@@ -86,6 +86,7 @@ model Location {
   priority       Int                 @default(2) // 1 = Critical, 2 = Standard, 3 = Low
   securityLevel  String              @default("Standard")
   shift          String              @default("Morning,Evening,Night") // Comma separated shifts
+  shiftTimings   String?             @default("{\"Morning\":\"06:00 - 14:00\",\"Evening\":\"14:00 - 22:00\",\"Night\":\"22:00 - 06:00\",\"Reserve\":\"General Shift\"}")
   status         String              @default("Active")
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt

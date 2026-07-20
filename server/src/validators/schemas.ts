@@ -32,6 +32,7 @@ export const locationSchema = z.object({
   priority: z.number().int().min(1).max(3).default(2),
   securityLevel: z.string().default('Standard'),
   shift: z.string().min(2), // Comma separated shifts like "Morning,Evening"
+  shiftTimings: z.string().optional(),
   status: z.string().default('Active'),
 });
 

@@ -26,6 +26,9 @@ export const Locations: React.FC = () => {
       shiftMorning: true,
       shiftEvening: true,
       shiftNight: true,
+      timingMorning: '06:00 - 14:00',
+      timingEvening: '14:00 - 22:00',
+      timingNight: '22:00 - 06:00',
       status: 'Active',
     }
   });
@@ -58,6 +61,9 @@ export const Locations: React.FC = () => {
       shiftMorning: true,
       shiftEvening: true,
       shiftNight: true,
+      timingMorning: '06:00 - 14:00',
+      timingEvening: '14:00 - 22:00',
+      timingNight: '22:00 - 06:00',
       status: 'Active',
     });
     setShowModal(true);
@@ -66,6 +72,13 @@ export const Locations: React.FC = () => {
   const openEditModal = (loc: any) => {
     setSelectedLoc(loc);
     const shifts = (loc.shift || 'Morning,Evening,Night').split(',');
+    let timings = { Morning: '06:00 - 14:00', Evening: '14:00 - 22:00', Night: '22:00 - 06:00' };
+    try {
+      if (loc.shiftTimings) {
+        timings = { ...timings, ...JSON.parse(loc.shiftTimings) };
+      }
+    } catch (e) {}
+
     reset({
       locationName: loc.locationName,
       requiredGuards: loc.requiredGuards,
@@ -74,6 +87,9 @@ export const Locations: React.FC = () => {
       shiftMorning: shifts.includes('Morning'),
       shiftEvening: shifts.includes('Evening'),
       shiftNight: shifts.includes('Night'),
+      timingMorning: timings.Morning || '06:00 - 14:00',
+      timingEvening: timings.Evening || '14:00 - 22:00',
+      timingNight: timings.Night || '22:00 - 06:00',
       status: loc.status,
     });
     setShowModal(true);
@@ -86,12 +102,19 @@ export const Locations: React.FC = () => {
     if (data.shiftEvening) activeShifts.push('Evening');
     if (data.shiftNight) activeShifts.push('Night');
 
+    const timingsObj = {
+      Morning: data.timingMorning || '06:00 - 14:00',
+      Evening: data.timingEvening || '14:00 - 22:00',
+      Night: data.timingNight || '22:00 - 06:00'
+    };
+
     const formatted = {
       locationName: data.locationName,
       requiredGuards: Number(data.requiredGuards),
       priority: Number(data.priority),
       securityLevel: data.securityLevel,
       shift: activeShifts.join(','),
+      shiftTimings: JSON.stringify(timingsObj),
       status: data.status,
     };
 
@@ -215,9 +238,22 @@ export const Locations: React.FC = () => {
                     <span className="text-xs font-semibold text-muted-foreground">Priority: {loc.priority === 1 ? 'High' : loc.priority === 2 ? 'Medium' : 'Low'}</span>
                   </div>
 
-                  <div className="text-xs space-y-1 text-muted-foreground">
+                  <div className="text-xs space-y-1.5 text-muted-foreground">
                     <div><strong>Staffing:</strong> {loc.requiredGuards} guard(s) per shift</div>
-                    <div><strong>Shifts slots:</strong> {loc.shift || 'Morning,Evening,Night'}</div>
+                    <div><strong>Active Shifts:</strong> {loc.shift || 'Morning,Evening,Night'}</div>
+                    {(() => {
+                      let tObj = { Morning: '06:00 - 14:00', Evening: '14:00 - 22:00', Night: '22:00 - 06:00' };
+                      try {
+                        if (loc.shiftTimings) tObj = { ...tObj, ...JSON.parse(loc.shiftTimings) };
+                      } catch (e) {}
+                      return (
+                        <div className="text-[10px] bg-muted/30 p-2 rounded-lg space-y-0.5 border border-border">
+                          <div><strong className="text-foreground">Morning:</strong> {tObj.Morning}</div>
+                          <div><strong className="text-foreground">Evening:</strong> {tObj.Evening}</div>
+                          <div><strong className="text-foreground">Night:</strong> {tObj.Night}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -284,20 +320,44 @@ export const Locations: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1">Operational Shift Blocks</label>
-                <div className="flex gap-4 items-center pt-1 text-xs">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" {...register('shiftMorning')} />
-                    <span>Morning</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" {...register('shiftEvening')} />
-                    <span>Evening</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" {...register('shiftNight')} />
-                    <span>Night</span>
-                  </label>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">Operational Shifts & Custom Timings</label>
+                <div className="space-y-2 pt-1 text-xs">
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                      <input type="checkbox" {...register('shiftMorning')} />
+                      <span>Morning</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 06:00 - 14:00"
+                      {...register('timingMorning')}
+                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                      <input type="checkbox" {...register('shiftEvening')} />
+                      <span>Evening</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 14:00 - 22:00"
+                      {...register('timingEvening')}
+                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                      <input type="checkbox" {...register('shiftNight')} />
+                      <span>Night</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 22:00 - 06:00"
+                      {...register('timingNight')}
+                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
+                    />
+                  </div>
                 </div>
               </div>
 

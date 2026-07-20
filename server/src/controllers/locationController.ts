@@ -29,7 +29,7 @@ export const getLocationById = async (req: Request, res: Response, next: NextFun
 
 export const createLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { locationName, requiredGuards, priority, securityLevel, shift, status } = req.body;
+    const { locationName, requiredGuards, priority, securityLevel, shift, shiftTimings, status } = req.body;
 
     const location = await prisma.location.create({
       data: {
@@ -38,6 +38,7 @@ export const createLocation = async (req: Request, res: Response, next: NextFunc
         priority,
         securityLevel,
         shift,
+        shiftTimings: shiftTimings || undefined,
         status: status || 'Active',
       },
     });
@@ -51,7 +52,7 @@ export const createLocation = async (req: Request, res: Response, next: NextFunc
 export const updateLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = Number(req.params.id);
-    const { locationName, requiredGuards, priority, securityLevel, shift, status } = req.body;
+    const { locationName, requiredGuards, priority, securityLevel, shift, shiftTimings, status } = req.body;
 
     const location = await prisma.location.update({
       where: { id },
@@ -61,6 +62,7 @@ export const updateLocation = async (req: Request, res: Response, next: NextFunc
         priority,
         securityLevel,
         shift,
+        shiftTimings,
         status,
       },
     });

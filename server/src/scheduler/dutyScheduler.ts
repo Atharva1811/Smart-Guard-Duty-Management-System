@@ -191,7 +191,8 @@ export const generateRosterSchedule = async (
     }
   });
 
-  // 4. Sticky assignment logic: Appoint yesterday's guard to the same spot/shift today (consecutive 6-day cycle)
+  // 4. 6-Day Continuous Location Assignment (Sticky Logic):
+  // Keeps a guard assigned to the same location & shift for 6 consecutive days before rotating.
   const yesterdayObj = new Date(dateObj.getTime() - 86400000);
   const yesterdayStr = yesterdayObj.toISOString().split('T')[0];
 
@@ -204,21 +205,44 @@ export const generateRosterSchedule = async (
       const locId = yesterdayAssign.locationId;
       const shift = yesterdayAssign.shift;
 
-      const loc = locations.find(l => l.id === locId);
-      if (loc) {
-        const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
-        const isValidShift = activeShifts.includes(shift) || shift === 'Reserve';
+      // Calculate how many consecutive days guard g worked at (locId, shift) ending yesterday
+      let consecutiveDaysAtSpot = 0;
+      let checkDateObj = new Date(dateObj.getTime() - 86400000); // yesterday
+      for (let day = 0; day < 6; day++) {
+        const checkDateStr = checkDateObj.toISOString().split('T')[0];
+        const workedSameSpot = history.some(h => 
+          h.guardId === g.id && 
+          h.assignmentDate === checkDateStr && 
+          h.locationId === locId && 
+          h.shift === shift
+        );
+        if (workedSameSpot) {
+          consecutiveDaysAtSpot++;
+          checkDateObj.setDate(checkDateObj.getDate() - 1);
+        } else {
+          break;
+        }
+      }
 
-        if (isValidShift) {
-          const currentCell = roster[locId][shift];
-          if (!currentCell || !currentCell.locked) {
-            roster[locId][shift] = {
-              guard_id: g.id,
-              guard_name: g.name,
-              guard_code: g.guardCode,
-              locked: false
-            };
-            assignedGuardIds.add(g.id);
+      // Re-assign guard to same location & shift if they have worked less than 6 consecutive days at this spot
+      if (consecutiveDaysAtSpot > 0 && consecutiveDaysAtSpot < 6) {
+        const loc = locations.find(l => l.id === locId);
+        if (loc) {
+          const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
+          const isValidShift = activeShifts.includes(shift) || shift === 'Reserve';
+
+          if (isValidShift) {
+            const currentCell = roster[locId][shift];
+            // Respect supervisor manual locks & guard permanent locks
+            if (!currentCell || !currentCell.guard_id) {
+              roster[locId][shift] = {
+                guard_id: g.id,
+                guard_name: g.name,
+                guard_code: g.guardCode,
+                locked: false
+              };
+              assignedGuardIds.add(g.id);
+            }
           }
         }
       }
