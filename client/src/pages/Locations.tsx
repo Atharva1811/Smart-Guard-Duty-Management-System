@@ -21,7 +21,6 @@ export const Locations: React.FC = () => {
     defaultValues: {
       locationName: '',
       requiredGuards: 1,
-      priority: 2,
       securityLevel: 'Standard',
       shiftMorning: true,
       shiftEvening: true,
@@ -56,7 +55,6 @@ export const Locations: React.FC = () => {
     reset({
       locationName: '',
       requiredGuards: 1,
-      priority: 2,
       securityLevel: 'Standard',
       shiftMorning: true,
       shiftEvening: true,
@@ -82,7 +80,6 @@ export const Locations: React.FC = () => {
     reset({
       locationName: loc.locationName,
       requiredGuards: loc.requiredGuards,
-      priority: loc.priority,
       securityLevel: loc.securityLevel,
       shiftMorning: shifts.includes('Morning'),
       shiftEvening: shifts.includes('Evening'),
@@ -111,7 +108,6 @@ export const Locations: React.FC = () => {
     const formatted = {
       locationName: data.locationName,
       requiredGuards: Number(data.requiredGuards),
-      priority: Number(data.priority),
       securityLevel: data.securityLevel,
       shift: activeShifts.join(','),
       shiftTimings: JSON.stringify(timingsObj),
@@ -221,21 +217,13 @@ export const Locations: React.FC = () => {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(loc => {
-            const isCritical = loc.priority === 1;
-
             return (
               <div key={loc.id} className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4 flex flex-col justify-between">
                 <div className="space-y-3.5">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-sm text-foreground">{translateText(loc.locationName)}</h4>
-                      {isCritical && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-rose-500/10 text-red-500 border border-red-500/20 uppercase mt-1">
-                          Critical Node
-                        </span>
-                      )}
                     </div>
-                    <span className="text-xs font-semibold text-muted-foreground">Priority: {loc.priority === 1 ? 'High' : loc.priority === 2 ? 'Medium' : 'Low'}</span>
                   </div>
 
                   <div className="text-xs space-y-1.5 text-muted-foreground">
@@ -297,26 +285,13 @@ export const Locations: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Required Guards Count</label>
-                  <input 
-                    type="number" 
-                    {...register('requiredGuards', { required: true })}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Priority Level</label>
-                  <select 
-                    {...register('priority')}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
-                  >
-                    <option value={1}>High (Critical Check)</option>
-                    <option value={2}>Medium (Standard Check)</option>
-                    <option value={3}>Low (Low Priority Check)</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">Required Guards Count</label>
+                <input 
+                  type="number" 
+                  {...register('requiredGuards', { required: true })}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
+                />
               </div>
 
               <div>

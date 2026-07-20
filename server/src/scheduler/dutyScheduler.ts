@@ -249,12 +249,10 @@ export const generateRosterSchedule = async (
     }
   });
 
-  // Sort locations by priority (1 is highest priority Critical security check)
-  const sortedLocations = [...locations].sort((a, b) => a.priority - b.priority);
-
+  // Process locations in standard order
   const shiftsToFill = ['Morning', 'Evening', 'Night'];
 
-  sortedLocations.forEach(loc => {
+  locations.forEach(loc => {
     const activeShifts = (loc.shift || 'Morning,Evening,Night').split(',');
 
     shiftsToFill.forEach(shift => {
@@ -325,13 +323,12 @@ export const generateRosterSchedule = async (
     });
   });
 
-  // Reserve assignments (assign unassigned available guards to high-priority locations)
-  const reserveLocations = sortedLocations.filter(l => l.priority === 1);
+  // Reserve assignments (assign unassigned available guards to reserve locations)
   const unassignedGuards = availableGuards
     .filter(g => !assignedGuardIds.has(g.id))
     .sort((a, b) => (workloadMap[a.id] || 0) - (workloadMap[b.id] || 0));
 
-  reserveLocations.forEach(loc => {
+  locations.forEach(loc => {
     if (unassignedGuards.length === 0) return;
 
     const cell = roster[loc.id]['Reserve'];
