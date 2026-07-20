@@ -28,8 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.data.success) {
         setUser(res.data.data);
       }
-    } catch (e) {
-      console.error('Failed to restore login session:', e);
+    } catch {
       logoutLocal();
     } finally {
       setIsLoading(false);
