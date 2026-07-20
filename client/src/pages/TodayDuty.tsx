@@ -14,10 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
-  Calendar,
   Copy,
-  UserX,
-  Zap
+  UserX
 } from 'lucide-react';
 
 export const TodayDuty: React.FC = () => {
@@ -51,17 +49,10 @@ export const TodayDuty: React.FC = () => {
   // Lock Duration Modal
   const [lockModalCell, setLockModalCell] = useState<{ locationId: number; shift: string; guardId: number } | null>(null);
   
-  // Integrated Auto-Allocation Modal State
-  const [showAllocateModal, setShowAllocateModal] = useState<boolean>(false);
-
   // Copy Roster Modal State
   const [showCopyModal, setShowCopyModal] = useState<boolean>(false);
   const [copySourceDate, setCopySourceDate] = useState<string>(activeDate);
   const [copyingRoster, setCopyingRoster] = useState<boolean>(false);
-
-  // 7-Day Weekly Allocation State
-  const [allocatingWeek, setAllocatingWeek] = useState<boolean>(false);
-  const [weekProgress, setWeekProgress] = useState<{ current: number; total: number; dateStr: string } | null>(null);
 
   // Location Level Locks
   const [lockedLocations, setLockedLocations] = useState<Record<number, boolean>>({});
@@ -73,149 +64,7 @@ export const TodayDuty: React.FC = () => {
     setCustomAlert({ title, message, type });
   };
 
-  // Single Day Allocation Handler
-  const runSingleDayAllocation = async () => {
-    setShowAllocateModal(false);
-    setGenerating(true);
-    try {
-      const lockedAssignments = roster
-        .filter(r => r.status === 'Locked' && r.guard_id)
-        .map(r => ({
-          locationId: r.location_id,
-          shift: r.shift,
-          guardId: r.guard_id
-        }));
 
-      const res = await api.post('/api/roster/generate', {
-        date: activeDate,
-        lockedAssignments
-      });
-
-      if (res.data.success) {
-        const generatedRoster = res.data.data.roster;
-        const newRoster = roster.map(cell => {
-          if (cell.status === 'Locked') return cell;
-
-          const locationData = generatedRoster[cell.location_id] || generatedRoster[String(cell.location_id)];
-          const shiftData = locationData ? locationData[cell.shift] : null;
-
-          if (shiftData && shiftData.guard_id) {
-            const guard = guards.find(g => g.id === shiftData.guard_id);
-            return {
-              ...cell,
-              guard_id: shiftData.guard_id,
-              guard_name: shiftData.guard_name,
-              guard_code: guard ? guard.guardCode : '??',
-              status: 'Assigned'
-            };
-          } else {
-            return {
-              ...cell,
-              guard_id: null,
-              guard_name: null,
-              guard_code: null,
-              status: 'Vacant'
-            };
-          }
-        });
-
-        setRoster(newRoster);
-        showAlert(`Single-day duty roster generated for ${activeDate}! Click "Save" to save to database.`, 'Allocation Complete', 'success');
-      }
-    } catch (e) {
-      console.error(e);
-      showAlert('Timetable generation failed. Please try again.', 'Error', 'warning');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // 7-Day Weekly Allocation Engine considering all locks across the week
-  const runWeeklyAllocation = async () => {
-    setShowAllocateModal(false);
-    setAllocatingWeek(true);
-    try {
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(activeDate);
-        d.setDate(d.getDate() + i);
-        const dateStr = d.toISOString().split('T')[0];
-
-        setWeekProgress({ current: i + 1, total: 7, dateStr });
-
-        // 1. Fetch existing assignments & locks for dateStr
-        const rosterRes = await api.get(`/api/roster/assignments?date=${dateStr}`);
-        const existing = rosterRes.data.data || [];
-
-        const lockedAssignments = existing
-          .filter((a: any) => a.status === 'Locked' && a.guard_id)
-          .map((a: any) => ({
-            locationId: a.location_id,
-            shift: a.shift,
-            guardId: a.guard_id
-          }));
-
-        // 2. Call generate API for dateStr
-        const genRes = await api.post('/api/roster/generate', {
-          date: dateStr,
-          lockedAssignments
-        });
-
-        if (genRes.data.success) {
-          const generatedRoster = genRes.data.data.roster;
-          const assignmentsToSave: any[] = [];
-
-          locations.forEach((loc: any) => {
-            const activeShifts = [...(loc.shift || 'Morning,Evening,Night').split(','), 'Reserve'];
-            activeShifts.forEach((shift: string) => {
-              const existingLocked = existing.find((a: any) => a.location_id === loc.id && a.shift === shift && a.status === 'Locked');
-              
-              if (existingLocked) {
-                assignmentsToSave.push({
-                  guard_id: existingLocked.guard_id,
-                  location_id: loc.id,
-                  shift,
-                  status: 'Locked'
-                });
-              } else {
-                const genLocation = generatedRoster[loc.id] || generatedRoster[String(loc.id)];
-                const genShift = genLocation ? genLocation[shift] : null;
-                if (genShift && genShift.guard_id) {
-                  assignmentsToSave.push({
-                    guard_id: genShift.guard_id,
-                    location_id: loc.id,
-                    shift,
-                    status: 'Assigned'
-                  });
-                } else {
-                  assignmentsToSave.push({
-                    guard_id: null,
-                    location_id: loc.id,
-                    shift,
-                    status: 'Vacant'
-                  });
-                }
-              }
-            });
-          });
-
-          // 3. Save to database for dateStr
-          await api.post('/api/roster/save', {
-            date: dateStr,
-            assignments: assignmentsToSave
-          });
-        }
-      }
-
-      showAlert(`7-Day Weekly Roster generated & saved successfully starting from ${activeDate}! All existing locks were preserved.`, 'Weekly Allocation Complete', 'success');
-      loadData(activeDate);
-    } catch (err) {
-      console.error('Weekly allocation error:', err);
-      showAlert('Failed to allocate weekly roster. Please check database connection.', 'Weekly Allocation Error', 'warning');
-    } finally {
-      setAllocatingWeek(false);
-      setWeekProgress(null);
-    }
-  };
 
   // Copy Roster Allocation handler
   const handleApplyCopyRoster = async () => {
@@ -388,9 +237,60 @@ export const TodayDuty: React.FC = () => {
     setActiveDate(e.target.value);
   };
 
-  // Trigger auto allocation modal options
-  const handleAutoAllocate = () => {
-    setShowAllocateModal(true);
+  // Trigger auto allocation from backend engine for activeDate
+  const handleAutoAllocate = async () => {
+    setGenerating(true);
+    try {
+      const lockedAssignments = roster
+        .filter(r => r.status === 'Locked' && r.guard_id)
+        .map(r => ({
+          locationId: r.location_id,
+          shift: r.shift,
+          guardId: r.guard_id
+        }));
+
+      const res = await api.post('/api/roster/generate', {
+        date: activeDate,
+        lockedAssignments
+      });
+
+      if (res.data.success) {
+        const generatedRoster = res.data.data.roster;
+        const newRoster = roster.map(cell => {
+          if (cell.status === 'Locked') return cell;
+
+          const locationData = generatedRoster[cell.location_id] || generatedRoster[String(cell.location_id)];
+          const shiftData = locationData ? locationData[cell.shift] : null;
+
+          if (shiftData && shiftData.guard_id) {
+            const guard = guards.find(g => g.id === shiftData.guard_id);
+            return {
+              ...cell,
+              guard_id: shiftData.guard_id,
+              guard_name: shiftData.guard_name,
+              guard_code: guard ? guard.guardCode : '??',
+              status: 'Assigned'
+            };
+          } else {
+            return {
+              ...cell,
+              guard_id: null,
+              guard_name: null,
+              guard_code: null,
+              status: 'Vacant'
+            };
+          }
+        });
+
+        setRoster(newRoster);
+        showAlert(`Duty roster schedule auto-allocated for ${activeDate}! Click "Save" to commit changes.`, 'Allocation Complete', 'success');
+      }
+    } catch (e) {
+      console.error(e);
+      showAlert('Timetable generation failed. Please try again.', 'Error', 'warning');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   // Save roster timetable to backend PostgreSQL
@@ -717,18 +617,18 @@ export const TodayDuty: React.FC = () => {
           />
           <button 
             onClick={handleAutoAllocate}
-            disabled={generating || allocatingWeek}
+            disabled={generating}
             className="px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-105 disabled:opacity-50 flex items-center gap-1.5 shadow-md"
           >
-            <RefreshCw className={`h-4 w-4 ${(generating || allocatingWeek) ? 'animate-spin' : ''}`} />
-            <span>{(generating || allocatingWeek) ? 'Allocating...' : 'Auto Allocate'}</span>
+            <RefreshCw className={`h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+            <span>{generating ? 'Allocating...' : 'Auto Allocate'}</span>
           </button>
           <button 
             onClick={() => {
               setCopySourceDate(activeDate);
               setShowCopyModal(true);
             }}
-            disabled={generating || allocatingWeek}
+            disabled={generating}
             className="px-3 py-2 text-sm font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-muted flex items-center gap-1.5 shadow-sm"
           >
             <Copy className="h-4 w-4" />
@@ -1088,75 +988,7 @@ export const TodayDuty: React.FC = () => {
         </div>
       )}
 
-      {/* INTEGRATED AUTO-ALLOCATION MODAL */}
-      {showAllocateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl p-6 shadow-2xl space-y-5">
-            <div>
-              <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-                <RefreshCw className="h-5 w-5 text-primary" />
-                <span>Auto-Allocation Mode Selection</span>
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Choose how you want to auto-staff duty assignments for your security guards.
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Option A: Single Day */}
-              <div 
-                onClick={runSingleDayAllocation}
-                className="group p-4 rounded-xl border border-border bg-muted/20 hover:bg-primary/10 hover:border-primary/50 cursor-pointer transition-all space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Zap className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground">Single Day Allocation</h4>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Generates schedule for <strong>{activeDate}</strong>. Preserves current locks on screen.
-                    </p>
-                  </div>
-                </div>
-                <button className="w-full py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground group-hover:brightness-105 transition-all">
-                  Allocate Single Day
-                </button>
-              </div>
-
-              {/* Option B: 7-Day Weekly */}
-              <div 
-                onClick={runWeeklyAllocation}
-                className="group p-4 rounded-xl border border-border bg-muted/20 hover:bg-indigo-500/10 hover:border-indigo-500/50 cursor-pointer transition-all space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground">Full 7-Day Weekly</h4>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Generates & saves 7 days schedule starting from <strong>{activeDate}</strong>. Preserves all 7 days' locks.
-                    </p>
-                  </div>
-                </div>
-                <button className="w-full py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white group-hover:bg-indigo-700 transition-all">
-                  Allocate Full 7 Days
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-1">
-              <button 
-                onClick={() => setShowAllocateModal(false)}
-                className="px-4 py-1.5 text-xs font-medium border border-border rounded-lg text-muted-foreground hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* COPY ROSTER MODAL */}
       {showCopyModal && (
@@ -1201,31 +1033,7 @@ export const TodayDuty: React.FC = () => {
         </div>
       )}
 
-      {/* WEEKLY ALLOCATION PROGRESS MODAL */}
-      {allocatingWeek && weekProgress && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-border/80 bg-card p-6 shadow-2xl space-y-4 text-center">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <RefreshCw className="h-6 w-6 animate-spin" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-foreground">Generating 7-Day Weekly Roster</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Processing day {weekProgress.current} of {weekProgress.total} ({weekProgress.dateStr})...
-              </p>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div 
-                className="bg-primary h-full transition-all duration-300 rounded-full"
-                style={{ width: `${(weekProgress.current / weekProgress.total) * 100}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">
-              Respecting all guard rotation rules, weekly off days, and locked slots.
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* CUSTOM ALERT MODAL */}
       {customAlert && (
