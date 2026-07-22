@@ -913,14 +913,14 @@ export const TodayDuty: React.FC = () => {
                 </div>
                 {(() => {
                   const lockedGuardIds = roster
-                    .filter(r => !(overrideLoc && r.location_id === overrideLoc.id && r.shift === overrideShift))
+                    .filter(r => !(overrideLoc && Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift))
                     .filter(r => r.status === 'Locked')
-                    .map(r => r.guard_id)
-                    .filter(id => id !== null && id !== undefined);
+                    .map(r => Number(r.guard_id))
+                    .filter(id => id !== null && id !== undefined && !isNaN(id));
                   
                   const query = candidateSearch.toLowerCase();
                   const filteredCandidates = candidates
-                    .filter(c => !lockedGuardIds.includes(c.id))
+                    .filter(c => !lockedGuardIds.includes(Number(c.id)))
                     .filter(c => c.name.toLowerCase().includes(query) || c.guardCode.toLowerCase().includes(query));
 
                   if (filteredCandidates.length === 0) {
@@ -928,7 +928,7 @@ export const TodayDuty: React.FC = () => {
                   }
 
                   return filteredCandidates.map(c => {
-                    const isSelected = overrideGuardId === String(c.id);
+                    const isSelected = Number(overrideGuardId) === Number(c.id);
                     return (
                       <div 
                         key={c.id}
