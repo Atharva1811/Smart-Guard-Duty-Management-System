@@ -430,11 +430,11 @@ export const TodayDuty: React.FC = () => {
   // Open override picker modal
   const handleOpenOverride = async (locationId: number, shift: string) => {
     setCandidateSearch('');
-    const loc = locations.find(l => l.id === locationId);
+    const loc = locations.find(l => Number(l.id) === Number(locationId));
     setOverrideLoc(loc);
     setOverrideShift(shift);
 
-    const cell = roster.find(r => r.location_id === locationId && r.shift === shift);
+    const cell = roster.find(r => Number(r.location_id) === Number(locationId) && r.shift === shift);
     setOverrideGuardId(cell?.guard_id ? String(cell.guard_id) : '');
 
     try {
@@ -451,15 +451,15 @@ export const TodayDuty: React.FC = () => {
   const handleApplyOverride = () => {
     if (!overrideLoc) return;
 
-    const cellIndex = roster.findIndex(r => r.location_id === overrideLoc.id && r.shift === overrideShift);
+    const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
     if (cellIndex !== -1) {
       const copy = [...roster];
       const selectedId = Number(overrideGuardId);
-      const guard = guards.find(g => g.id === selectedId);
+      const guard = guards.find(g => Number(g.id) === selectedId) || candidates.find(c => Number(c.id) === selectedId);
 
       if (guard) {
         // Find if this guard was previously assigned to another cell today (excluding target cell)
-        const prevCellIndex = copy.findIndex(r => r.guard_id === selectedId && !(r.location_id === overrideLoc.id && r.shift === overrideShift));
+        const prevCellIndex = copy.findIndex(r => r.guard_id && Number(r.guard_id) === selectedId && !(Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift));
 
         // Assign guard to target cell
         copy[cellIndex] = {
@@ -483,11 +483,11 @@ export const TodayDuty: React.FC = () => {
           // Find occupied guard IDs to get a pool of free guards
           const occupiedIds = new Set<number>();
           copy.forEach(r => {
-            if (r.guard_id) occupiedIds.add(r.guard_id);
+            if (r.guard_id) occupiedIds.add(Number(r.guard_id));
           });
 
           // Filter candidates to get free guards
-          const freeCandidates = candidates.filter(c => !occupiedIds.has(c.id));
+          const freeCandidates = candidates.filter(c => !occupiedIds.has(Number(c.id)));
 
           if (freeCandidates.length > 0) {
             const replacement = freeCandidates[0];
@@ -517,7 +517,7 @@ export const TodayDuty: React.FC = () => {
 
   const handleClearOverride = () => {
     if (!overrideLoc) return;
-    const cellIndex = roster.findIndex(r => r.location_id === overrideLoc.id && r.shift === overrideShift);
+    const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
     if (cellIndex !== -1) {
       const copy = [...roster];
       copy[cellIndex] = {
