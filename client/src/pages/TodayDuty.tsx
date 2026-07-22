@@ -449,59 +449,84 @@ export const TodayDuty: React.FC = () => {
   };
 
   const handleApplyOverride = () => {
-    if (!overrideLoc) return;
+    try {
+      if (!overrideLoc) return;
 
-    const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
-    if (cellIndex !== -1) {
-      const copy = [...roster];
-      const selectedId = Number(overrideGuardId);
-      const guard = guards.find(g => Number(g.id) === selectedId) || candidates.find(c => Number(c.id) === selectedId);
+      const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
+      if (cellIndex !== -1) {
+        const copy = [...roster];
+        const selectedId = Number(overrideGuardId);
+        const guard = (guards || []).find(g => Number(g.id) === selectedId) || (candidates || []).find(c => Number(c.id) === selectedId);
 
-      if (guard) {
-        // Find if this guard was previously assigned to another cell today (excluding target cell)
-        const prevCellIndex = copy.findIndex(r => r.guard_id && Number(r.guard_id) === selectedId && !(Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift));
+        if (guard) {
+          // Find if this guard was previously assigned to another cell today (excluding target cell)
+          const prevCellIndex = copy.findIndex(r => r.guard_id && Number(r.guard_id) === selectedId && !(Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift));
 
-        // Assign guard to target cell
-        copy[cellIndex] = {
-          ...copy[cellIndex],
-          guard_id: guard.id,
-          guard_name: guard.name,
-          guard_code: guard.guardCode,
-          status: 'Assigned'
-        };
+          // Assign guard to target cell
+          copy[cellIndex] = {
+            ...copy[cellIndex],
+            guard_id: guard.id,
+            guard_name: guard.name,
+            guard_code: guard.guardCode,
+            status: 'Assigned'
+          };
 
-        if (prevCellIndex !== -1) {
-          // Old cell is temporarily vacant
-          copy[prevCellIndex] = {
-            ...copy[prevCellIndex],
+          if (prevCellIndex !== -1) {
+            // Old cell is temporarily vacant
+            copy[prevCellIndex] = {
+              ...copy[prevCellIndex],
+              guard_id: null,
+              guard_name: null,
+              guard_code: null,
+              status: 'Vacant'
+            };
+
+            // Find occupied guard IDs to get a pool of free guards
+            const occupiedIds = new Set<number>();
+            copy.forEach(r => {
+              if (r.guard_id) occupiedIds.add(Number(r.guard_id));
+            });
+
+            // Filter candidates to get free guards
+            const freeCandidates = (candidates || []).filter(c => !occupiedIds.has(Number(c.id)));
+
+            if (freeCandidates.length > 0) {
+              const replacement = freeCandidates[0];
+              copy[prevCellIndex] = {
+                ...copy[prevCellIndex],
+                guard_id: replacement.id,
+                guard_name: replacement.name,
+                guard_code: replacement.guardCode,
+                status: 'Assigned'
+              };
+              showAlert(`Auto-staffed: ${replacement.name} has been assigned to ${translateText(copy[prevCellIndex].location_name)} (${copy[prevCellIndex].shift}) to replace ${guard.name}.`, 'Auto-Staffing Update', 'success');
+            }
+          }
+        } else {
+          copy[cellIndex] = {
+            ...copy[cellIndex],
             guard_id: null,
             guard_name: null,
             guard_code: null,
             status: 'Vacant'
           };
-
-          // Find occupied guard IDs to get a pool of free guards
-          const occupiedIds = new Set<number>();
-          copy.forEach(r => {
-            if (r.guard_id) occupiedIds.add(Number(r.guard_id));
-          });
-
-          // Filter candidates to get free guards
-          const freeCandidates = candidates.filter(c => !occupiedIds.has(Number(c.id)));
-
-          if (freeCandidates.length > 0) {
-            const replacement = freeCandidates[0];
-            copy[prevCellIndex] = {
-              ...copy[prevCellIndex],
-              guard_id: replacement.id,
-              guard_name: replacement.name,
-              guard_code: replacement.guardCode,
-              status: 'Assigned'
-            };
-            showAlert(`Auto-staffed: ${replacement.name} has been assigned to ${translateText(copy[prevCellIndex].location_name)} (${copy[prevCellIndex].shift}) to replace ${guard.name}.`, 'Auto-Staffing Update', 'success');
-          }
         }
-      } else {
+        setRoster(copy);
+      }
+    } catch (err) {
+      console.error('Error applying override:', err);
+      showAlert('Failed to save the manual override assignment. Please try again.', 'Error', 'warning');
+    } finally {
+      setShowOverride(false);
+    }
+  };
+
+  const handleClearOverride = () => {
+    try {
+      if (!overrideLoc) return;
+      const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
+      if (cellIndex !== -1) {
+        const copy = [...roster];
         copy[cellIndex] = {
           ...copy[cellIndex],
           guard_id: null,
@@ -509,27 +534,13 @@ export const TodayDuty: React.FC = () => {
           guard_code: null,
           status: 'Vacant'
         };
+        setRoster(copy);
       }
-      setRoster(copy);
+    } catch (err) {
+      console.error('Error clearing override:', err);
+    } finally {
+      setShowOverride(false);
     }
-    setShowOverride(false);
-  };
-
-  const handleClearOverride = () => {
-    if (!overrideLoc) return;
-    const cellIndex = roster.findIndex(r => Number(r.location_id) === Number(overrideLoc.id) && r.shift === overrideShift);
-    if (cellIndex !== -1) {
-      const copy = [...roster];
-      copy[cellIndex] = {
-        ...copy[cellIndex],
-        guard_id: null,
-        guard_name: null,
-        guard_code: null,
-        status: 'Vacant'
-      };
-      setRoster(copy);
-    }
-    setShowOverride(false);
   };
 
   // Drag and Drop implementation
@@ -902,7 +913,10 @@ export const TodayDuty: React.FC = () => {
               />
               <div className="space-y-1.5 max-h-[220px] overflow-y-auto border border-border rounded-lg p-2 bg-muted/10">
                 <div 
-                  onClick={() => setOverrideGuardId('')}
+                  onClick={() => {
+                    console.log('Override picker: Clearing selection');
+                    setOverrideGuardId('');
+                  }}
                   className={`p-2 rounded-lg text-xs cursor-pointer border transition-all ${
                     overrideGuardId === '' 
                       ? 'bg-red-500/10 border-red-500 text-red-500 font-semibold' 
@@ -932,18 +946,21 @@ export const TodayDuty: React.FC = () => {
                     return (
                       <div 
                         key={c.id}
-                        onClick={() => setOverrideGuardId(String(c.id))}
+                        onClick={() => {
+                          console.log('Override picker: Selected candidate ID:', c.id, c.name);
+                          setOverrideGuardId(String(c.id));
+                        }}
                         className={`p-2 rounded-lg text-xs cursor-pointer border transition-all flex justify-between items-center ${
                           isSelected 
                             ? 'bg-primary/10 border-primary text-primary font-semibold' 
                             : 'border-border/40 hover:bg-muted/40 text-foreground'
                         }`}
                       >
-                        <div>
-                          <div className="font-semibold">{translateText(c.name)}</div>
-                          <div className="text-[9px] text-muted-foreground">{c.guardCode}</div>
+                        <div className="pointer-events-none">
+                          <div className="font-semibold pointer-events-none">{translateText(c.name)}</div>
+                          <div className="text-[9px] text-muted-foreground pointer-events-none">{c.guardCode}</div>
                         </div>
-                        {isSelected && <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded font-bold">Selected</span>}
+                        {isSelected && <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded font-bold pointer-events-none">Selected</span>}
                       </div>
                     );
                   });
