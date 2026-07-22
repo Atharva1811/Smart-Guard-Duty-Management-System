@@ -251,6 +251,240 @@ const PHONETIC_MAP: Record<string, string> = {
   "Reserve": "राखीव",
 };
 
+const WORD_TRANSLATIONS: Record<string, string> = {
+  // Surnames
+  "khandizhod": "खांडीझोड",
+  "bhamare": "भामरे",
+  "shinde": "शिंदे",
+  "patil": "पाटील",
+  "kadam": "कदम",
+  "pawar": "पवार",
+  "sawant": "सावंत",
+  "rane": "राणे",
+  "more": "मोरे",
+  "jadhav": "जाधव",
+  "deshmukh": "देशमुख",
+  "joshi": "जोशी",
+  "koli": "कोळी",
+  "gaikwad": "गायकवाड",
+  "chavan": "चव्हाण",
+  "thakur": "ठाकूर",
+  "shelar": "शेलार",
+  "salunkhe": "सळुंखे",
+  "nikam": "निकम",
+  "sharma": "शर्मा",
+  "singh": "सिंग",
+  "tambe": "तांबे",
+  "kale": "काळे",
+  "phalke": "फाळके",
+  "thorat": "थोरात",
+  "bhagat": "भगत",
+  "dhumal": "धुमाळ",
+  "mulik": "मुळीक",
+  "wagh": "वाघ",
+  "mhatre": "म्हात्रे",
+  "salve": "साळवे",
+  "ghadge": "घाडगे",
+  "ghadage": "घाडगे",
+
+  // First names
+  "suresh": "सुरेश",
+  "dattu": "दत्तू",
+  "sunil": "सुनील",
+  "ramesh": "रमेश",
+  "sanjay": "संजय",
+  "aniket": "अनिकेत",
+  "pooja": "पूजा",
+  "vijay": "विजय",
+  "rahul": "राहुल",
+  "snehal": "स्नेहल",
+  "amol": "अमोल",
+  "ganesh": "गणेश",
+  "dipak": "दीपक",
+  "deepak": "दीपक",
+  "sandip": "संदीप",
+  "sandeep": "संदीप",
+  "priyanka": "प्रियंका",
+  "prasad": "प्रसाद",
+  "nitin": "नितीन",
+  "arjun": "अर्जुन",
+  "ashok": "अशोक",
+  "dilip": "दिलीप",
+  "harsh": "हर्ष",
+  "kishor": "किशोर",
+  "mahesh": "महेश",
+  "pradeep": "प्रदीप",
+  "rajendra": "राजेन्द्र",
+  "sachin": "सचिन",
+  "vikram": "विक्रम",
+  "yash": "यश",
+  "prathamesh": "प्रथमेश",
+  "anita": "अनिता",
+  "savita": "सविता",
+  "kavita": "कविता",
+  "jyoti": "ज्योती",
+  "swati": "स्वाती",
+  "sheetal": "शीतल",
+  "sunita": "सुनीता",
+  "nisha": "निशा",
+  "archana": "अर्चना",
+  "prashant": "प्रशांत",
+  "akshay": "अक्षय",
+  "siddharth": "सिद्धार्थ",
+  "karan": "करण",
+  "amit": "अमित",
+  "rohit": "रोहित",
+
+  // Common checkpoints / locations
+  "entry": "एंट्री",
+  "gate": "गेट",
+  "visitor": "व्हिजिटर",
+  "pass": "पास",
+  "in": "इन",
+  "cc": "सीसी",
+  "corner": "कॉर्नर",
+  "parking": "पार्किंग",
+  "college": "कॉलेज",
+  "back": "मागील",
+  "side": "बाजू",
+  "society": "सोसायटी",
+  "b": "बी",
+  "pharmacy": "फार्मसी",
+  "office": "ऑफिस",
+  "ladies": "लेडीज",
+  "hostel": "हॉस्टेल",
+  "boys": "मुले",
+  "canteen": "कॅन्टीन",
+  "library": "लायब्ररी",
+  "lab": "लॅब",
+  "store": "स्टोअर",
+  "ground": "मैदान",
+  "main": "मुख्य",
+  "building": "बिल्डिंग",
+  "campus": "कॅम्पस",
+  "quarter": "क्वार्टर",
+  "quarters": "क्वार्टर्स",
+  "security": "सुरक्षा",
+  "cabin": "केबिन",
+  "road": "रस्ता",
+  "street": "गल्ली",
+  "area": "क्षेत्र",
+  "zone": "झोन",
+  "cctv": "सीसीटीव्ही",
+  "control": "नियंत्रण",
+  "room": "रूम",
+  "mess": "मेस",
+  "gym": "जिम",
+  "garden": "बाग",
+  "temple": "मंदिर",
+  "hospital": "रुग्णालय",
+  "clinic": "क्लिनिक",
+  "school": "शाळा",
+  "class": "वर्ग",
+  "department": "विभाग",
+  "dept": "विभाग",
+  "admin": "प्रशासन",
+  "station": "स्टेशन",
+  "pump": "पंप",
+  "water": "पाणी",
+  "tank": "टाकी",
+  "power": "वीज",
+  "house": "हाउस",
+  "workshop": "कार्यशाळा"
+};
+
+const phoneticTransliterate = (word: string): string => {
+  const cleanWord = word.trim();
+  if (!cleanWord) return "";
+
+  // Check code/number pattern (e.g. G012, 102, etc.)
+  if (/^[a-zA-Z]\d+$/.test(cleanWord) || /^\d+$/.test(cleanWord)) {
+    return word;
+  }
+
+  const lookupKey = cleanWord.toLowerCase();
+  if (WORD_TRANSLATIONS[lookupKey]) {
+    return WORD_TRANSLATIONS[lookupKey];
+  }
+
+  // Fallback to syllable mapping
+  let res = lookupKey;
+
+  const mappingRules: [string, string][] = [
+    ["khandizhod", "खांडीझोड"],
+    ["bhamare", "भामरे"],
+    ["patil", "पाटील"],
+    ["shinde", "शिंदे"],
+    ["kadam", "कदम"],
+    ["pawar", "पवार"],
+    ["sawant", "सावंत"],
+    ["rane", "राणे"],
+    ["more", "मोरे"],
+    ["jadhav", "जाधव"],
+    ["deshmukh", "देशमुख"],
+    ["joshi", "जोशी"],
+    ["koli", "कोळी"],
+    ["suresh", "सुरेश"],
+    ["dattu", "दत्तू"],
+    ["sunil", "सुनील"],
+    ["ramesh", "रमेश"],
+    ["sanjay", "संजय"],
+
+    ["entry", "एंट्री"],
+    ["visitor", "व्हिजिटर"],
+    ["college", "कॉलेज"],
+
+    ["ksh", "क्ष"],
+    ["chh", "छ"],
+    ["ch", "च"],
+    ["kh", "ख"],
+    ["gh", "घ"],
+    ["jh", "झ"],
+    ["th", "थ"],
+    ["dh", "ध"],
+    ["ph", "फ"],
+    ["bh", "भ"],
+    ["sh", "श"],
+    ["gn", "ज्ञ"],
+
+    ["k", "क"],
+    ["g", "ग"],
+    ["j", "ज"],
+    ["t", "त"],
+    ["d", "द"],
+    ["n", "न"],
+    ["p", "प"],
+    ["f", "फ"],
+    ["b", "ब"],
+    ["m", "म"],
+    ["y", "य"],
+    ["r", "र"],
+    ["l", "ल"],
+    ["v", "व"],
+    ["w", "व"],
+    ["s", "स"],
+    ["h", "ह"],
+    ["z", "झ"],
+
+    ["aa", "ा"],
+    ["a", "ा"],
+    ["ee", "ी"],
+    ["i", "ि"],
+    ["oo", "ू"],
+    ["u", "ु"],
+    ["e", "े"],
+    ["o", "ो"],
+    ["ai", "ै"],
+    ["au", "ौ"]
+  ];
+
+  for (const [eng, mar] of mappingRules) {
+    res = res.split(eng).join(mar);
+  }
+
+  return res;
+};
+
 interface LanguageContextType {
   language: 'en' | 'mr';
   setLanguage: (lang: 'en' | 'mr') => void;
@@ -280,8 +514,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const translateText = (text: string) => {
-    if (language === 'en') return text;
-    return PHONETIC_MAP[text] || text;
+    if (language === 'en' || !text) return text;
+    if (PHONETIC_MAP[text]) return PHONETIC_MAP[text];
+
+    // Tokenize string including whitespaces and brackets to preserve formatting
+    return text.split(/(\s+|[()])/g).map(part => {
+      if (!part.trim()) return part;
+      if (part === '(' || part === ')') return part;
+      return phoneticTransliterate(part);
+    }).join('');
   };
 
   return (
