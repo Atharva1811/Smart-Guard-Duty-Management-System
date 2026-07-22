@@ -900,12 +900,17 @@ export const TodayDuty: React.FC = () => {
                 onChange={(e) => setCandidateSearch(e.target.value)}
                 className="w-full px-3 py-1.5 text-xs rounded-lg border border-border bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary focus:text-white placeholder-slate-500"
               />
-              <select 
-                value={overrideGuardId}
-                onChange={(e) => setOverrideGuardId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-muted/20"
-              >
-                <option value="">-- Vacant / Unassigned --</option>
+              <div className="space-y-1.5 max-h-[220px] overflow-y-auto border border-border rounded-lg p-2 bg-muted/10">
+                <div 
+                  onClick={() => setOverrideGuardId('')}
+                  className={`p-2 rounded-lg text-xs cursor-pointer border transition-all ${
+                    overrideGuardId === '' 
+                      ? 'bg-red-500/10 border-red-500 text-red-500 font-semibold' 
+                      : 'border-transparent hover:bg-muted/40 text-muted-foreground'
+                  }`}
+                >
+                  -- Set as Vacant / Unassigned --
+                </div>
                 {(() => {
                   const lockedGuardIds = roster
                     .filter(r => !(overrideLoc && r.location_id === overrideLoc.id && r.shift === overrideShift))
@@ -918,13 +923,32 @@ export const TodayDuty: React.FC = () => {
                     .filter(c => !lockedGuardIds.includes(c.id))
                     .filter(c => c.name.toLowerCase().includes(query) || c.guardCode.toLowerCase().includes(query));
 
-                  return filteredCandidates.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.guardCode})
-                    </option>
-                  ));
+                  if (filteredCandidates.length === 0) {
+                    return <div className="text-[11px] text-muted-foreground text-center py-4">No matching candidates found</div>;
+                  }
+
+                  return filteredCandidates.map(c => {
+                    const isSelected = overrideGuardId === String(c.id);
+                    return (
+                      <div 
+                        key={c.id}
+                        onClick={() => setOverrideGuardId(String(c.id))}
+                        className={`p-2 rounded-lg text-xs cursor-pointer border transition-all flex justify-between items-center ${
+                          isSelected 
+                            ? 'bg-primary/10 border-primary text-primary font-semibold' 
+                            : 'border-border/40 hover:bg-muted/40 text-foreground'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-semibold">{translateText(c.name)}</div>
+                          <div className="text-[9px] text-muted-foreground">{c.guardCode}</div>
+                        </div>
+                        {isSelected && <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded font-bold">Selected</span>}
+                      </div>
+                    );
+                  });
                 })()}
-              </select>
+              </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-2 text-xs">
