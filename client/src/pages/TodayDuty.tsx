@@ -145,13 +145,22 @@ export const TodayDuty: React.FC = () => {
       setLocations(locs);
       setGuards(gList);
 
-      // If no assignments exist on backend, pre-populate vacant structure
-      if (assignments.length === 0) {
-        const vacantRoster: any[] = [];
-        locs.forEach((l: any) => {
-          const activeShifts = (l.shift || 'Morning,Evening,Night').split(',');
-          activeShifts.forEach((s: string) => {
-            vacantRoster.push({
+      // Construct a complete, merged roster list containing all cells for all active checkpoints & shifts
+      const mergedRoster: any[] = [];
+      const activeAssignmentsList = assignments || [];
+
+      locs.forEach((l: any) => {
+        const activeShifts = [...(l.shift || 'Morning,Evening,Night').split(','), 'Reserve'];
+        activeShifts.forEach((s: string) => {
+          // Look for an existing assignment from the backend
+          const existing = activeAssignmentsList.find((a: any) => 
+            Number(a.location_id) === Number(l.id) && a.shift === s
+          );
+
+          if (existing) {
+            mergedRoster.push(existing);
+          } else {
+            mergedRoster.push({
               location_id: l.id,
               location_name: l.locationName,
               shift: s,
@@ -161,27 +170,14 @@ export const TodayDuty: React.FC = () => {
               status: 'Vacant',
               assignment_date: dateStr
             });
-          });
-          // Add Reserve shift
-          vacantRoster.push({
-            location_id: l.id,
-            location_name: l.locationName,
-            shift: 'Reserve',
-            guard_id: null,
-            guard_name: null,
-            guard_code: null,
-            status: 'Vacant',
-            assignment_date: dateStr
-          });
+          }
         });
-        setRoster(vacantRoster);
-      } else {
-        setRoster(assignments);
-      }
+      });
+
+      setRoster(mergedRoster);
 
       // Compute initial lockedLocations state from loaded assignments
       const locLockMap: Record<number, boolean> = {};
-      const activeAssignmentsList = assignments.length > 0 ? assignments : [];
       locs.forEach((l: any) => {
         const activeShifts = [...(l.shift || 'Morning,Evening,Night').split(','), 'Reserve'];
         const shiftsForLoc = activeAssignmentsList.filter((a: any) => a.location_id === l.id && activeShifts.includes(a.shift));
@@ -332,7 +328,7 @@ export const TodayDuty: React.FC = () => {
 
     // Set all shift cells for this location to Locked or Assigned/Vacant locally
     const copy = roster.map(cell => {
-      if (cell.location_id === locationId) {
+      if (Number(cell.location_id) === Number(locationId)) {
         return {
           ...cell,
           status: isLocked ? 'Locked' : (cell.guard_id ? 'Assigned' : 'Vacant')
@@ -346,7 +342,7 @@ export const TodayDuty: React.FC = () => {
   // Cell Lock/Unlock override
   const handleToggleLock = async (locationId: number, shift: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const cell = roster.find(r => r.location_id === locationId && r.shift === shift);
+    const cell = roster.find(r => Number(r.location_id) === Number(locationId) && r.shift === shift);
     if (!cell || !cell.guard_id) return;
 
     if (cell.status === 'Locked') {
@@ -358,7 +354,7 @@ export const TodayDuty: React.FC = () => {
         });
         
         const copy = [...roster];
-        const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
+        const idx = copy.findIndex(r => Number(r.location_id) === Number(locationId) && r.shift === shift);
         if (idx !== -1) {
           copy[idx] = {
             ...copy[idx],
@@ -392,7 +388,7 @@ export const TodayDuty: React.FC = () => {
       });
 
       const copy = [...roster];
-      const idx = copy.findIndex(r => r.location_id === locationId && r.shift === shift);
+      const idx = copy.findIndex(r => Number(r.location_id) === Number(locationId) && r.shift === shift);
       if (idx !== -1) {
         copy[idx] = {
           ...copy[idx],
@@ -559,10 +555,10 @@ export const TodayDuty: React.FC = () => {
     const sourceLocId = draggedCell.locationId;
     const sourceShift = draggedCell.shift;
 
-    if (sourceLocId === targetLocId && sourceShift === targetShift) return;
+    if (Number(sourceLocId) === Number(targetLocId) && sourceShift === targetShift) return;
 
-    const sourceIndex = roster.findIndex(r => r.location_id === sourceLocId && r.shift === sourceShift);
-    const targetIndex = roster.findIndex(r => r.location_id === targetLocId && r.shift === targetShift);
+    const sourceIndex = roster.findIndex(r => Number(r.location_id) === Number(sourceLocId) && r.shift === sourceShift);
+    const targetIndex = roster.findIndex(r => Number(r.location_id) === Number(targetLocId) && r.shift === targetShift);
 
     if (sourceIndex !== -1 && targetIndex !== -1) {
       const copy = [...roster];

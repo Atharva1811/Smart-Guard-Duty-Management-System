@@ -25,9 +25,12 @@ export const Locations: React.FC = () => {
       shiftMorning: true,
       shiftEvening: true,
       shiftNight: true,
-      timingMorning: '06:00 - 14:00',
-      timingEvening: '14:00 - 22:00',
-      timingNight: '22:00 - 06:00',
+      timingMorningStart: '06:00',
+      timingMorningEnd: '14:00',
+      timingEveningStart: '14:00',
+      timingEveningEnd: '22:00',
+      timingNightStart: '22:00',
+      timingNightEnd: '06:00',
       status: 'Active',
     }
   });
@@ -59,9 +62,12 @@ export const Locations: React.FC = () => {
       shiftMorning: true,
       shiftEvening: true,
       shiftNight: true,
-      timingMorning: '06:00 - 14:00',
-      timingEvening: '14:00 - 22:00',
-      timingNight: '22:00 - 06:00',
+      timingMorningStart: '06:00',
+      timingMorningEnd: '14:00',
+      timingEveningStart: '14:00',
+      timingEveningEnd: '22:00',
+      timingNightStart: '22:00',
+      timingNightEnd: '06:00',
       status: 'Active',
     });
     setShowModal(true);
@@ -77,6 +83,19 @@ export const Locations: React.FC = () => {
       }
     } catch (e) {}
 
+    const splitTiming = (timingStr: string, defaultStart: string, defaultEnd: string) => {
+      if (!timingStr) return { start: defaultStart, end: defaultEnd };
+      const parts = timingStr.split(/\s*-\s*/);
+      return {
+        start: parts[0] || defaultStart,
+        end: parts[1] || defaultEnd
+      };
+    };
+
+    const morning = splitTiming(timings.Morning, '06:00', '14:00');
+    const evening = splitTiming(timings.Evening, '14:00', '22:00');
+    const night = splitTiming(timings.Night, '22:00', '06:00');
+
     reset({
       locationName: loc.locationName,
       requiredGuards: loc.requiredGuards,
@@ -84,9 +103,12 @@ export const Locations: React.FC = () => {
       shiftMorning: shifts.includes('Morning'),
       shiftEvening: shifts.includes('Evening'),
       shiftNight: shifts.includes('Night'),
-      timingMorning: timings.Morning || '06:00 - 14:00',
-      timingEvening: timings.Evening || '14:00 - 22:00',
-      timingNight: timings.Night || '22:00 - 06:00',
+      timingMorningStart: morning.start,
+      timingMorningEnd: morning.end,
+      timingEveningStart: evening.start,
+      timingEveningEnd: evening.end,
+      timingNightStart: night.start,
+      timingNightEnd: night.end,
       status: loc.status,
     });
     setShowModal(true);
@@ -100,9 +122,9 @@ export const Locations: React.FC = () => {
     if (data.shiftNight) activeShifts.push('Night');
 
     const timingsObj = {
-      Morning: data.timingMorning || '06:00 - 14:00',
-      Evening: data.timingEvening || '14:00 - 22:00',
-      Night: data.timingNight || '22:00 - 06:00'
+      Morning: `${data.timingMorningStart} - ${data.timingMorningEnd}`,
+      Evening: `${data.timingEveningStart} - ${data.timingEveningEnd}`,
+      Night: `${data.timingNightStart} - ${data.timingNightEnd}`
     };
 
     const formatted = {
@@ -296,42 +318,63 @@ export const Locations: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">Operational Shifts & Custom Timings</label>
-                <div className="space-y-2 pt-1 text-xs">
+                <div className="space-y-3 pt-1 text-xs">
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-20">
                       <input type="checkbox" {...register('shiftMorning')} />
                       <span>Morning</span>
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 06:00 - 14:00"
-                      {...register('timingMorning')}
-                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
-                    />
+                    <div className="flex-1 flex items-center gap-1">
+                      <input 
+                        type="time" 
+                        {...register('timingMorningStart')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                      <span className="text-muted-foreground">-</span>
+                      <input 
+                        type="time" 
+                        {...register('timingMorningEnd')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-20">
                       <input type="checkbox" {...register('shiftEvening')} />
                       <span>Evening</span>
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 14:00 - 22:00"
-                      {...register('timingEvening')}
-                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
-                    />
+                    <div className="flex-1 flex items-center gap-1">
+                      <input 
+                        type="time" 
+                        {...register('timingEveningStart')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                      <span className="text-muted-foreground">-</span>
+                      <input 
+                        type="time" 
+                        {...register('timingEveningEnd')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer w-24">
+                    <label className="flex items-center gap-1.5 cursor-pointer w-20">
                       <input type="checkbox" {...register('shiftNight')} />
                       <span>Night</span>
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 22:00 - 06:00"
-                      {...register('timingNight')}
-                      className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20"
-                    />
+                    <div className="flex-1 flex items-center gap-1">
+                      <input 
+                        type="time" 
+                        {...register('timingNightStart')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                      <span className="text-muted-foreground">-</span>
+                      <input 
+                        type="time" 
+                        {...register('timingNightEnd')}
+                        className="flex-1 px-2.5 py-1 text-xs rounded border border-border bg-muted/20 text-foreground focus:text-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

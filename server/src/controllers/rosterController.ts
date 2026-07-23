@@ -65,21 +65,21 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
     const locationsMap = new Map(locationsList.map(l => [l.id, l]));
 
     const assignmentsToInsert = assignments.map(a => ({
-      guardId: a.guard_id || null,
-      locationId: a.location_id,
-      shift: a.shift,
+      guardId: a.guard_id ? Number(a.guard_id) : null,
+      locationId: Number(a.location_id),
+      shift: String(a.shift),
       assignmentDate: date,
-      status: a.status || 'Assigned'
+      status: String(a.status || 'Assigned')
     }));
 
     const historyToInsert = assignments
       .filter(a => a.guard_id)
       .map(a => {
-        const location = locationsMap.get(a.location_id);
+        const location = locationsMap.get(Number(a.location_id));
         return {
-          guardId: a.guard_id,
-          locationId: a.location_id,
-          shift: a.shift,
+          guardId: Number(a.guard_id),
+          locationId: Number(a.location_id),
+          shift: String(a.shift),
           assignmentDate: date,
           remarks: `Assigned to ${location?.locationName || 'checkpoint'} on ${shiftFriendly(a.shift)}`
         };
@@ -90,10 +90,10 @@ export const saveAssignments = async (req: Request, res: Response, next: NextFun
       // Delete existing for target date
       await tx.dutyAssignment.deleteMany({ where: { assignmentDate: date } });
 
-      // Prune records older than 3 days before target date
+      // Prune records older than 30 days before target date
       const currentDate = new Date(date);
       const thresholdDate = new Date(currentDate);
-      thresholdDate.setDate(currentDate.getDate() - 3);
+      thresholdDate.setDate(currentDate.getDate() - 30);
       const thresholdDateStr = thresholdDate.toISOString().split('T')[0];
 
       await tx.dutyAssignment.deleteMany({
