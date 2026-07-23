@@ -3,10 +3,13 @@ import { prisma } from '../config/db.js';
 import { GuardStatus, LeaveStatus } from '@prisma/client';
 
 export interface LockedAssignmentInput {
-  location_id: number;
+  location_id?: number;
+  locationId?: number;
   shift: string;
-  guard_id: number;
-  guard_name: string;
+  guard_id?: number;
+  guardId?: number;
+  guard_name?: string;
+  guardName?: string;
 }
 
 export interface ScoredCandidate {
@@ -75,16 +78,20 @@ export const generateRosterSchedule = async (
     };
   });
 
-  // Map Locked Overrides
+  // Map Locked Overrides (handles both camelCase and snake_case inputs)
   lockedAssignments.forEach(la => {
-    if (roster[la.location_id]) {
-      roster[la.location_id][la.shift] = {
-        guard_id: la.guard_id,
-        guard_name: la.guard_name,
+    const locId = Number(la.location_id || la.locationId);
+    const gId = la.guard_id || la.guardId;
+    const gName = la.guard_name || la.guardName || '';
+
+    if (locId && roster[locId]) {
+      roster[locId][la.shift] = {
+        guard_id: gId ? Number(gId) : null,
+        guard_name: gName,
         locked: true
       };
-      if (la.guard_id) {
-        assignedGuardIds.add(la.guard_id);
+      if (gId) {
+        assignedGuardIds.add(Number(gId));
       }
     }
   });
