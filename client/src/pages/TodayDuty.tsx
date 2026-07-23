@@ -396,8 +396,6 @@ export const TodayDuty: React.FC = () => {
         };
         setRoster(copy);
       }
-      
-      loadData(activeDate);
     } catch (err) {
       console.error('Failed to lock:', err);
     } finally {
